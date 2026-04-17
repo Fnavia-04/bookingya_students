@@ -1,0 +1,46 @@
+name: BookingYa - Pruebas Unitarias (TDD)
+
+on:
+  push:
+    branches: [ main, estudiantes ]
+  pull_request:
+    branches: [ main, estudiantes ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: ['17']
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    - name: Instalar JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Compilar y ejecutar pruebas TDD
+      run: mvn clean test -B -V
+
+    - name: Generar reporte de pruebas
+      if: always()
+      run: mvn surefire-report:report
+
+    - name: Subir resultados de pruebas
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-reports
+        path: target/site/surefire-report.html
+
+    - name: Mostrar resumen de pruebas
+      if: always()
+      run: |
+        echo "✅ Pruebas completadas"
+        echo "📊 Reporte disponible en: target/site/surefire-report.html"

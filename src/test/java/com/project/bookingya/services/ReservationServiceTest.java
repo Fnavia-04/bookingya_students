@@ -5,7 +5,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
+<<<<<<< HEAD
 import java.util.Arrays;
+=======
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+<<<<<<< HEAD
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
@@ -22,6 +26,14 @@ import org.modelmapper.TypeToken;
 
 import com.project.bookingya.dtos.ReservationDto;
 import com.project.bookingya.entities.GuestEntity;
+=======
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.modelmapper.ModelMapper;
+
+import com.project.bookingya.dtos.ReservationDto;
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 import com.project.bookingya.entities.ReservationEntity;
 import com.project.bookingya.entities.RoomEntity;
 import com.project.bookingya.exceptions.BusinessRuleException;
@@ -48,6 +60,10 @@ class ReservationServiceTest {
     @Mock
     private ModelMapper mapper;
 
+<<<<<<< HEAD
+=======
+    @InjectMocks
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
     private ReservationService reservationService;
 
     private UUID reservationId;
@@ -55,6 +71,7 @@ class ReservationServiceTest {
     private UUID roomId;
     private LocalDateTime checkIn;
     private LocalDateTime checkOut;
+<<<<<<< HEAD
 
     @BeforeEach
     void setUp() {
@@ -65,10 +82,20 @@ class ReservationServiceTest {
             mapper
         );
 
+=======
+    private ReservationEntity reservationEntity;
+    private ReservationDto reservationDto;
+    private Reservation reservation;
+    private RoomEntity roomEntity;
+
+    @BeforeEach
+    void setUp() {
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
         reservationId = UUID.randomUUID();
         guestId = UUID.randomUUID();
         roomId = UUID.randomUUID();
         checkIn = LocalDateTime.now().plusDays(1);
+<<<<<<< HEAD
         checkOut = LocalDateTime.now().plusDays(3);
     }
 
@@ -101,12 +128,72 @@ class ReservationServiceTest {
                 .thenReturn(reservationEntity);
             when(mapper.map(reservationEntity, Reservation.class))
                 .thenReturn(expectedReservation);
+=======
+        checkOut = LocalDateTime.now().plusDays(5);
+
+        reservationEntity = new ReservationEntity();
+        reservationEntity.setId(reservationId);
+        reservationEntity.setGuestId(guestId);
+        reservationEntity.setRoomId(roomId);
+        reservationEntity.setCheckIn(checkIn);
+        reservationEntity.setCheckOut(checkOut);
+        reservationEntity.setGuestsCount(2);
+        reservationEntity.setNotes("Test reservation");
+
+        reservationDto = new ReservationDto();
+        reservationDto.setGuestId(guestId);
+        reservationDto.setRoomId(roomId);
+        reservationDto.setCheckIn(checkIn);
+        reservationDto.setCheckOut(checkOut);
+        reservationDto.setGuestsCount(2);
+        reservationDto.setNotes("Test reservation");
+
+        reservation = new Reservation();
+        reservation.setId(reservationId);
+        reservation.setGuestId(guestId);
+        reservation.setRoomId(roomId);
+        reservation.setCheckIn(checkIn);
+        reservation.setCheckOut(checkOut);
+        reservation.setGuestsCount(2);
+        reservation.setNotes("Test reservation");
+
+        roomEntity = new RoomEntity();
+        roomEntity.setId(roomId);
+        roomEntity.setAvailable(true);
+        roomEntity.setMaxGuests(4);
+    }
+
+    @Nested
+    @DisplayName("CREATE - Crear una reserva")
+    class CreateReservationTests {
+
+        @Test
+        @DisplayName("Debe crear una reserva exitosamente con datos válidos")
+        void shouldCreateReservationSuccessfully() {
+            // Arrange
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+            when(guestRepository.findById(guestId)).thenReturn(Optional.of(mock()));
+            when(reservationRepository.existsOverlappingReservationForRoom(
+                roomId, checkIn, checkOut, null)).thenReturn(false);
+            when(reservationRepository.existsOverlappingReservationForGuest(
+                guestId, checkIn, checkOut, null)).thenReturn(false);
+            when(mapper.map(reservationDto, ReservationEntity.class))
+                .thenReturn(reservationEntity);
+            when(reservationRepository.saveAndFlush(any(ReservationEntity.class)))
+                .thenReturn(reservationEntity);
+            when(mapper.map(reservationEntity, Reservation.class))
+                .thenReturn(reservation);
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 
             // Act
             Reservation result = reservationService.create(reservationDto);
 
             // Assert
             assertNotNull(result);
+<<<<<<< HEAD
+=======
+            assertEquals(reservationId, result.getId());
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             assertEquals(guestId, result.getGuestId());
             assertEquals(roomId, result.getRoomId());
             assertEquals(2, result.getGuestsCount());
@@ -114,6 +201,7 @@ class ReservationServiceTest {
         }
 
         @Test
+<<<<<<< HEAD
         @DisplayName("Should throw BusinessRuleException when check-in is after check-out")
         void shouldThrowExceptionWhenInvalidDateRange() {
             // Arrange
@@ -133,12 +221,35 @@ class ReservationServiceTest {
         void shouldThrowExceptionWhenInvalidGuestsCount() {
             // Arrange
             ReservationDto reservationDto = createValidReservationDto();
+=======
+        @DisplayName("Debe lanzar excepción cuando las fechas son inválidas")
+        void shouldThrowExceptionWhenCheckOutBeforeCheckIn() {
+            // Arrange
+            ReservationDto invalidDto = new ReservationDto();
+            invalidDto.setGuestId(guestId);
+            invalidDto.setRoomId(roomId);
+            invalidDto.setCheckIn(checkOut);
+            invalidDto.setCheckOut(checkIn);
+            invalidDto.setGuestsCount(2);
+
+            // Act & Assert
+            assertThrows(BusinessRuleException.class, () -> {
+                reservationService.create(invalidDto);
+            });
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando guestsCount es inválido")
+        void shouldThrowExceptionWhenGuestsCountInvalid() {
+            // Arrange
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             reservationDto.setGuestsCount(0);
 
             // Act & Assert
             assertThrows(BusinessRuleException.class, () -> {
                 reservationService.create(reservationDto);
             });
+<<<<<<< HEAD
             verify(reservationRepository, never()).saveAndFlush(any());
         }
 
@@ -147,12 +258,21 @@ class ReservationServiceTest {
         void shouldThrowExceptionWhenRoomNotExists() {
             // Arrange
             ReservationDto reservationDto = createValidReservationDto();
+=======
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando la habitación no existe")
+        void shouldThrowExceptionWhenRoomNotFound() {
+            // Arrange
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
 
             // Act & Assert
             assertThrows(EntityNotExistsException.class, () -> {
                 reservationService.create(reservationDto);
             });
+<<<<<<< HEAD
             verify(reservationRepository, never()).saveAndFlush(any());
         }
 
@@ -164,12 +284,22 @@ class ReservationServiceTest {
             RoomEntity room = createRoomEntity(true, 5);
 
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(room));
+=======
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando el guest no existe")
+        void shouldThrowExceptionWhenGuestNotFound() {
+            // Arrange
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             when(guestRepository.findById(guestId)).thenReturn(Optional.empty());
 
             // Act & Assert
             assertThrows(EntityNotExistsException.class, () -> {
                 reservationService.create(reservationDto);
             });
+<<<<<<< HEAD
             verify(reservationRepository, never()).saveAndFlush(any());
         }
 
@@ -182,11 +312,23 @@ class ReservationServiceTest {
 
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(room));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(new GuestEntity()));
+=======
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando la habitación no está disponible")
+        void shouldThrowExceptionWhenRoomNotAvailable() {
+            // Arrange
+            roomEntity.setAvailable(false);
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+            when(guestRepository.findById(guestId)).thenReturn(Optional.of(mock()));
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 
             // Act & Assert
             assertThrows(BusinessRuleException.class, () -> {
                 reservationService.create(reservationDto);
             });
+<<<<<<< HEAD
             verify(reservationRepository, never()).saveAndFlush(any());
         }
 
@@ -200,11 +342,23 @@ class ReservationServiceTest {
 
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(room));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(new GuestEntity()));
+=======
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando se excede la capacidad de la habitación")
+        void shouldThrowExceptionWhenExceedsRoomCapacity() {
+            // Arrange
+            reservationDto.setGuestsCount(5); // Room has max 4 guests
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+            when(guestRepository.findById(guestId)).thenReturn(Optional.of(mock()));
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 
             // Act & Assert
             assertThrows(BusinessRuleException.class, () -> {
                 reservationService.create(reservationDto);
             });
+<<<<<<< HEAD
             verify(reservationRepository, never()).saveAndFlush(any());
         }
 
@@ -220,11 +374,24 @@ class ReservationServiceTest {
             when(reservationRepository.existsOverlappingReservationForRoom(
                 anyUUID(), any(LocalDateTime.class), any(LocalDateTime.class), isNull()
             )).thenReturn(true);
+=======
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando hay solapamiento con otra reserva de la habitación")
+        void shouldThrowExceptionWhenRoomReservationOverlaps() {
+            // Arrange
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+            when(guestRepository.findById(guestId)).thenReturn(Optional.of(mock()));
+            when(reservationRepository.existsOverlappingReservationForRoom(
+                roomId, checkIn, checkOut, null)).thenReturn(true);
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 
             // Act & Assert
             assertThrows(BusinessRuleException.class, () -> {
                 reservationService.create(reservationDto);
             });
+<<<<<<< HEAD
             verify(reservationRepository, never()).saveAndFlush(any());
         }
 
@@ -243,16 +410,34 @@ class ReservationServiceTest {
             when(reservationRepository.existsOverlappingReservationForGuest(
                 anyUUID(), any(LocalDateTime.class), any(LocalDateTime.class), isNull()
             )).thenReturn(true);
+=======
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando hay solapamiento con otra reserva del guest")
+        void shouldThrowExceptionWhenGuestReservationOverlaps() {
+            // Arrange
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+            when(guestRepository.findById(guestId)).thenReturn(Optional.of(mock()));
+            when(reservationRepository.existsOverlappingReservationForRoom(
+                roomId, checkIn, checkOut, null)).thenReturn(false);
+            when(reservationRepository.existsOverlappingReservationForGuest(
+                guestId, checkIn, checkOut, null)).thenReturn(true);
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 
             // Act & Assert
             assertThrows(BusinessRuleException.class, () -> {
                 reservationService.create(reservationDto);
             });
+<<<<<<< HEAD
             verify(reservationRepository, never()).saveAndFlush(any());
+=======
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
         }
     }
 
     @Nested
+<<<<<<< HEAD
     @DisplayName("Get Reservation by ID Tests")
     class GetReservationByIdTests {
 
@@ -267,20 +452,42 @@ class ReservationServiceTest {
                 .thenReturn(Optional.of(reservationEntity));
             when(mapper.map(reservationEntity, Reservation.class))
                 .thenReturn(expectedReservation);
+=======
+    @DisplayName("READ - Consultar una reserva")
+    class ReadReservationTests {
+
+        @Test
+        @DisplayName("Debe obtener una reserva por ID exitosamente")
+        void shouldGetReservationByIdSuccessfully() {
+            // Arrange
+            when(reservationRepository.findById(reservationId))
+                .thenReturn(Optional.of(reservationEntity));
+            when(mapper.map(reservationEntity, Reservation.class))
+                .thenReturn(reservation);
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 
             // Act
             Reservation result = reservationService.getById(reservationId);
 
             // Assert
             assertNotNull(result);
+<<<<<<< HEAD
+=======
+            assertEquals(reservationId, result.getId());
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             assertEquals(guestId, result.getGuestId());
             assertEquals(roomId, result.getRoomId());
             verify(reservationRepository, times(1)).findById(reservationId);
         }
 
         @Test
+<<<<<<< HEAD
         @DisplayName("Should throw EntityNotExistsException when reservation does not exist")
         void shouldThrowExceptionWhenReservationNotExists() {
+=======
+        @DisplayName("Debe lanzar excepción cuando la reserva no existe")
+        void shouldThrowExceptionWhenReservationNotFound() {
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             // Arrange
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.empty());
@@ -292,6 +499,7 @@ class ReservationServiceTest {
         }
 
         @Test
+<<<<<<< HEAD
         @DisplayName("Should return correct reservation data")
         void shouldReturnCorrectReservationData() {
             // Arrange
@@ -327,10 +535,68 @@ class ReservationServiceTest {
             assertEquals(roomId, result.getRoomId());
             assertEquals(3, result.getGuestsCount());
             assertEquals("Test notes", result.getNotes());
+=======
+        @DisplayName("Debe obtener todas las reservas")
+        void shouldGetAllReservations() {
+            // Arrange
+            List<ReservationEntity> entities = List.of(reservationEntity);
+            List<Reservation> reservations = List.of(reservation);
+            when(reservationRepository.findAll()).thenReturn(entities);
+            when(mapper.map(eq(entities), any(java.lang.reflect.Type.class)))
+                .thenReturn(reservations);
+
+            // Act
+            List<Reservation> result = reservationService.getAll();
+
+            // Assert
+            assertNotNull(result);
+            assertFalse(result.isEmpty());
+            assertEquals(1, result.size());
+            verify(reservationRepository, times(1)).findAll();
+        }
+
+        @Test
+        @DisplayName("Debe obtener reservas por room ID")
+        void shouldGetReservationsByRoomId() {
+            // Arrange
+            List<ReservationEntity> entities = List.of(reservationEntity);
+            List<Reservation> reservations = List.of(reservation);
+            when(reservationRepository.findByRoomId(roomId)).thenReturn(entities);
+            when(mapper.map(eq(entities), any(java.lang.reflect.Type.class)))
+                .thenReturn(reservations);
+
+            // Act
+            List<Reservation> result = reservationService.getByRoomId(roomId);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            verify(reservationRepository, times(1)).findByRoomId(roomId);
+        }
+
+        @Test
+        @DisplayName("Debe obtener reservas por guest ID")
+        void shouldGetReservationsByGuestId() {
+            // Arrange
+            List<ReservationEntity> entities = List.of(reservationEntity);
+            List<Reservation> reservations = List.of(reservation);
+            when(reservationRepository.findByGuestId(guestId)).thenReturn(entities);
+            when(mapper.map(eq(entities), any(java.lang.reflect.Type.class)))
+                .thenReturn(reservations);
+
+            // Act
+            List<Reservation> result = reservationService.getByGuestId(guestId);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            verify(reservationRepository, times(1)).findByGuestId(guestId);
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
         }
     }
 
     @Nested
+<<<<<<< HEAD
     @DisplayName("Update Reservation Tests")
     class UpdateReservationTests {
 
@@ -368,14 +634,59 @@ class ReservationServiceTest {
 
             // Assert
             assertNotNull(result);
+=======
+    @DisplayName("UPDATE - Actualizar una reserva")
+    class UpdateReservationTests {
+
+        @Test
+        @DisplayName("Debe actualizar una reserva exitosamente")
+        void shouldUpdateReservationSuccessfully() {
+            // Arrange
+            ReservationDto updateDto = new ReservationDto();
+            updateDto.setGuestId(guestId);
+            updateDto.setRoomId(roomId);
+            updateDto.setCheckIn(checkIn.plusDays(1));
+            updateDto.setCheckOut(checkOut.plusDays(1));
+            updateDto.setGuestsCount(3);
+            updateDto.setNotes("Updated reservation");
+
+            when(reservationRepository.findById(reservationId))
+                .thenReturn(Optional.of(reservationEntity));
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+            when(guestRepository.findById(guestId)).thenReturn(Optional.of(mock()));
+            when(reservationRepository.existsOverlappingReservationForRoom(
+                roomId, updateDto.getCheckIn(), updateDto.getCheckOut(), reservationId))
+                .thenReturn(false);
+            when(reservationRepository.existsOverlappingReservationForGuest(
+                guestId, updateDto.getCheckIn(), updateDto.getCheckOut(), reservationId))
+                .thenReturn(false);
+            doNothing().when(mapper).map(any(ReservationDto.class), any(ReservationEntity.class));
+            when(reservationRepository.saveAndFlush(any(ReservationEntity.class)))
+                .thenReturn(reservationEntity);
+            when(mapper.map(any(ReservationEntity.class), eq(Reservation.class)))
+                .thenReturn(reservation);
+
+            // Act
+            Reservation result = reservationService.update(updateDto, reservationId);
+
+            // Assert
+            assertNotNull(result);
+            verify(reservationRepository, times(1)).findById(reservationId);
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             verify(reservationRepository, times(1)).saveAndFlush(any(ReservationEntity.class));
         }
 
         @Test
+<<<<<<< HEAD
         @DisplayName("Should throw EntityNotExistsException when reservation to update does not exist")
         void shouldThrowExceptionWhenReservationNotExists() {
             // Arrange
             ReservationDto reservationDto = createValidReservationDto();
+=======
+        @DisplayName("Debe lanzar excepción cuando la reserva no existe")
+        void shouldThrowExceptionWhenReservationNotFoundOnUpdate() {
+            // Arrange
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.empty());
 
@@ -383,6 +694,7 @@ class ReservationServiceTest {
             assertThrows(EntityNotExistsException.class, () -> {
                 reservationService.update(reservationDto, reservationId);
             });
+<<<<<<< HEAD
             verify(reservationRepository, never()).saveAndFlush(any());
         }
 
@@ -444,10 +756,33 @@ class ReservationServiceTest {
             verify(reservationRepository).existsOverlappingReservationForGuest(
                 anyUUID(), any(LocalDateTime.class), any(LocalDateTime.class), eq(reservationId)
             );
+=======
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando las fechas actualizadas son inválidas")
+        void shouldThrowExceptionWhenUpdatedDatesInvalid() {
+            // Arrange
+            ReservationDto invalidDto = new ReservationDto();
+            invalidDto.setGuestId(guestId);
+            invalidDto.setRoomId(roomId);
+            invalidDto.setCheckIn(checkOut);
+            invalidDto.setCheckOut(checkIn);
+            invalidDto.setGuestsCount(2);
+
+            when(reservationRepository.findById(reservationId))
+                .thenReturn(Optional.of(reservationEntity));
+
+            // Act & Assert
+            assertThrows(BusinessRuleException.class, () -> {
+                reservationService.update(invalidDto, reservationId);
+            });
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
         }
     }
 
     @Nested
+<<<<<<< HEAD
     @DisplayName("Delete Reservation Tests")
     class DeleteReservationTests {
 
@@ -458,18 +793,40 @@ class ReservationServiceTest {
             ReservationEntity reservationEntity = createValidReservationEntity();
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.of(reservationEntity));
+=======
+    @DisplayName("DELETE - Eliminar una reserva")
+    class DeleteReservationTests {
+
+        @Test
+        @DisplayName("Debe eliminar una reserva exitosamente")
+        void shouldDeleteReservationSuccessfully() {
+            // Arrange
+            when(reservationRepository.findById(reservationId))
+                .thenReturn(Optional.of(reservationEntity));
+            doNothing().when(reservationRepository).delete(any());
+            doNothing().when(reservationRepository).flush();
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 
             // Act
             reservationService.delete(reservationId);
 
             // Assert
+<<<<<<< HEAD
+=======
+            verify(reservationRepository, times(1)).findById(reservationId);
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             verify(reservationRepository, times(1)).delete(reservationEntity);
             verify(reservationRepository, times(1)).flush();
         }
 
         @Test
+<<<<<<< HEAD
         @DisplayName("Should throw EntityNotExistsException when reservation to delete does not exist")
         void shouldThrowExceptionWhenReservationNotExists() {
+=======
+        @DisplayName("Debe lanzar excepción cuando la reserva no existe")
+        void shouldThrowExceptionWhenReservationNotFoundOnDelete() {
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
             // Arrange
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.empty());
@@ -478,6 +835,7 @@ class ReservationServiceTest {
             assertThrows(EntityNotExistsException.class, () -> {
                 reservationService.delete(reservationId);
             });
+<<<<<<< HEAD
             verify(reservationRepository, never()).delete(any());
         }
 
@@ -495,10 +853,13 @@ class ReservationServiceTest {
             // Assert
             verify(reservationRepository, times(1)).delete(reservationEntity);
             verify(reservationRepository, times(1)).flush();
+=======
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
         }
     }
 
     @Nested
+<<<<<<< HEAD
     @DisplayName("Get All Reservations Tests")
     class GetAllReservationsTests {
 
@@ -651,4 +1012,34 @@ class ReservationServiceTest {
     private static UUID anyUUID() {
         return any(UUID.class);
     }
+=======
+    @DisplayName("UTILITY - Métodos de utilidad")
+    class UtilityTests {
+
+        @Test
+        @DisplayName("Debe verificar disponibilidad de habitación correctamente")
+        void shouldCheckRoomAvailabilitySuccessfully() {
+            // Arrange
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+            when(reservationRepository.existsOverlappingReservationForRoom(
+                roomId, checkIn, checkOut, null)).thenReturn(false);
+
+            // Act
+            boolean result = reservationService.isRoomAvailable(roomId, checkIn, checkOut);
+
+            // Assert
+            assertTrue(result);
+            verify(roomRepository, times(1)).findById(roomId);
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando verifica disponibilidad con fechas inválidas")
+        void shouldThrowExceptionWhenCheckingAvailabilityWithInvalidDates() {
+            // Act & Assert
+            assertThrows(BusinessRuleException.class, () -> {
+                reservationService.isRoomAvailable(roomId, checkOut, checkIn);
+            });
+        }
+    }
+>>>>>>> 172dd885fac0a45e017f03dbf7a46e05025ed065
 }
