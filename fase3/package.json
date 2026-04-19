@@ -1,0 +1,14 @@
+{
+  "name": "bookingya-atdd-playwright",
+  "version": "1.0.0",
+  "description": "BookingYa — Fase 3 ATDD con Playwright + TypeScript",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:report": "npx playwright test --reporter=html",
+    "report": "npx playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "typescript": "^5.4.5"
+  }
+}
