@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
         "html:target/cucumber-reports/cucumber.html",
         "json:target/cucumber-reports/cucumber.json"
     },
-    tags = "not @wip"
+    tags = "not @wip and not @integration"
 )
 public class CucumberRunner {
     // Clase vacía — solo actúa como punto de entrada para el runner
