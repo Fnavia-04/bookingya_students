@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bookingya-postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookingya-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookingya-db
+  template:
+    metadata:
+      labels:
+        app: bookingya-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_DB
+              value: bookingya
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: root
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-storage
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: bookingya-postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookingya-db
+spec:
+  type: ClusterIP
+  selector:
+    app: bookingya-db
+  ports:
+    - port: 5432
+      targetPort: 5432
