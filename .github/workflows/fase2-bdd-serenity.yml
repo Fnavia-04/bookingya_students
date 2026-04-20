@@ -1,0 +1,36 @@
+name: FASE 2 - BDD con Serenity y Cucumber
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-fase2:
+    runs-on: ubuntu-latest
+    name: Pruebas BDD con Serenity
+
+    steps:
+    - name: Clonar repositorio
+      uses: actions/checkout@v3
+
+    - name: Configurar JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Compilar FASE 2
+      run: cd fase2 && mvn clean compile
+
+    - name: Ejecutar pruebas BDD con Serenity
+      run: cd fase2 && mvn verify
+
+    - name: Publicar reporte Serenity
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: serenity-report-fase2
+        path: fase2/target/site/serenity/
