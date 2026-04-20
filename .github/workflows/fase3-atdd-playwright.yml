@@ -1,0 +1,36 @@
+name: FASE 3 - ATDD con Playwright
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-fase3:
+    runs-on: ubuntu-latest
+    name: Pruebas ATDD con Playwright
+
+    steps:
+    - name: Clonar repositorio
+      uses: actions/checkout@v3
+
+    - name: Configurar Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: fase3/package-lock.json
+
+    - name: Instalar dependencias Playwright
+      run: cd fase3 && npm install
+
+    - name: Compilar TypeScript
+      run: cd fase3 && npx tsc --noEmit
+
+    - name: Publicar configuracion y tests
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: playwright-config-fase3
+        path: fase3/tests/
