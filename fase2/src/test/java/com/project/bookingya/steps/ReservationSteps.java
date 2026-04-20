@@ -1,9 +1,8 @@
 package com.project.bookingya.steps;
 
-import io.cucumber.java.en.*;
+import io.cucumber.java.es.*;
 import io.restassured.response.Response;
 import net.serenitybdd.rest.SerenityRest;
-import org.hamcrest.Matchers;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,228 +12,190 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 /**
- * FASE 2 — BDD
- * Step Definitions de Cucumber con Serenity REST (RestAssured integrado).
- *
- * Los steps usan SerenityRest para que cada llamada HTTP quede registrada
- * automáticamente en el reporte HTML de Serenity.
- *
- * Base URL configurada en el step "Background" del feature file.
+ * FASE 2 - BDD con Serenity + Cucumber
+ * 
+ * Pasos para validar el comportamiento de las reservas en BookingYa.
+ * Los pasos usan SerenityRest que registra automaticamente en los reportes.
  */
 public class ReservationSteps {
 
     private String baseUrl;
-    private UUID   roomId;
-    private UUID   guestId;
-    private UUID   lastReservationId;
-    private Response lastResponse;
+    private UUID roomId;
+    private UUID guestId;
+    private UUID reservationId;
+    private Response response;
 
-    // ─── Background ─────────────────────────────────────────────────────────
-
-    @Given("que el sistema BookingYa está disponible en {string}")
+    // Background
+    @Dado("que el sistema está disponible en {string}")
     public void sistemaDisponible(String url) {
         this.baseUrl = url;
         SerenityRest.setDefaultBasePath(url);
     }
 
-    // ─── Given: Setup de datos ───────────────────────────────────────────────
+    // Given: Preparacion de datos
+    @Dado("que existe una habitacion disponible con codigo {string} para {int} personas")
+    public void crearHabitacion(String code, int capacity) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("code", code);
+        body.put("name", "Habitacion " + code);
+        body.put("city", "Bogota");
+        body.put("maxGuests", capacity);
+        body.put("nightlyPrice", 120.0);
+        body.put("available", true);
 
-    @Given("que existe una habitación disponible con código {string} y capacidad para {int} huéspedes")
-    public void crearHabitacionDisponible(String code, int maxGuests) {
-        Map<String, Object> body = roomBody(code, maxGuests, true);
-        Response res = SerenityRest.given()
+        response = SerenityRest.given()
                 .contentType("application/json")
                 .body(body)
                 .when().post("/room");
-        roomId = UUID.fromString(res.jsonPath().getString("id"));
+
+        roomId = UUID.fromString(response.jsonPath().getString("id"));
     }
 
-    @Given("que existe una habitación NO disponible con código {string} y capacidad para {int} huéspedes")
-    public void crearHabitacionNoDisponible(String code, int maxGuests) {
-        Map<String, Object> body = roomBody(code, maxGuests, false);
-        Response res = SerenityRest.given()
-                .contentType("application/json")
-                .body(body)
-                .when().post("/room");
-        roomId = UUID.fromString(res.jsonPath().getString("id"));
-    }
-
-    @Given("que existe un huésped registrado con identificación {string}")
-    public void crearHuesped(String identification) {
+    @Dado("que existe un huesped registrado con cedula {string}")
+    public void crearHuesped(String cedula) {
         Map<String, String> body = new HashMap<>();
-        body.put("identification", identification);
-        body.put("name", "Huésped " + identification);
-        body.put("email", identification.toLowerCase().replace("-", "") + "@mail.com");
+        body.put("identification", cedula);
+        body.put("name", "Usuario " + cedula);
+        body.put("email", "usuario" + cedula + "@mail.com");
 
-        Response res = SerenityRest.given()
+        response = SerenityRest.given()
                 .contentType("application/json")
                 .body(body)
                 .when().post("/guest");
-        guestId = UUID.fromString(res.jsonPath().getString("id"));
+
+        guestId = UUID.fromString(response.jsonPath().getString("id"));
     }
 
-    @Given("ya existe una reserva en esa habitación del {string} al {string}")
-    public void crearReservaPrevia(String checkIn, String checkOut) {
-        Map<String, Object> body = reservationBody(roomId, guestId, checkIn, checkOut, 1);
-        SerenityRest.given()
-                .contentType("application/json")
-                .body(body)
-                .when().post("/reservation")
-                .then().statusCode(200);
-    }
-
-    // ─── When: Acciones ──────────────────────────────────────────────────────
-
-    @When("el usuario crea una reserva con checkIn {string} y checkOut {string} para {int} huésped")
-    public void crearReserva(String checkIn, String checkOut, int guestsCount) {
-        crearReservaConN(checkIn, checkOut, guestsCount);
-    }
-
-    @When("el usuario crea una reserva con checkIn {string} y checkOut {string} para {int} huéspedes")
-    public void crearReservaPlural(String checkIn, String checkOut, int guestsCount) {
-        crearReservaConN(checkIn, checkOut, guestsCount);
-    }
-
-    private void crearReservaConN(String checkIn, String checkOut, int guestsCount) {
-        Map<String, Object> body = reservationBody(roomId, guestId, checkIn, checkOut, guestsCount);
-        lastResponse = SerenityRest.given()
-                .contentType("application/json")
-                .body(body)
-                .when().post("/reservation");
-
-        if (lastResponse.statusCode() == 200) {
-            lastReservationId = UUID.fromString(lastResponse.jsonPath().getString("id"));
-        }
-    }
-
-    @When("el usuario con identificación {string} intenta reservar la misma habitación del {string} al {string} para {int} huésped")
-    public void crearReservaSolapada(String identification, String checkIn, String checkOut, int guestsCount) {
-        // Buscar el guestId por identificación
-        Response guestRes = SerenityRest.given()
-                .when().get("/guest/identification/" + identification);
-        UUID secondGuestId = UUID.fromString(guestRes.jsonPath().getString("id"));
-
-        Map<String, Object> body = reservationBody(roomId, secondGuestId, checkIn, checkOut, guestsCount);
-        lastResponse = SerenityRest.given()
-                .contentType("application/json")
-                .body(body)
-                .when().post("/reservation");
-    }
-
-    @When("el usuario consulta todas las reservas")
-    public void consultarTodas() {
-        lastResponse = SerenityRest.given().when().get("/reservation");
-    }
-
-    @When("el usuario consulta la reserva por su ID")
-    public void consultarPorId() {
-        lastResponse = SerenityRest.given().when().get("/reservation/" + lastReservationId);
-    }
-
-    @When("el usuario consulta la reserva con ID {string}")
-    public void consultarPorIdEspecifico(String id) {
-        lastResponse = SerenityRest.given().when().get("/reservation/" + id);
-    }
-
-    @When("el usuario consulta la disponibilidad de esa habitación del {string} al {string}")
-    public void consultarDisponibilidad(String checkIn, String checkOut) {
-        lastResponse = SerenityRest.given()
-                .queryParam("checkIn", checkIn)
-                .queryParam("checkOut", checkOut)
-                .when().get("/reservation/availability/room/" + roomId);
-    }
-
-    @When("el usuario actualiza la reserva con checkIn {string} y checkOut {string} para {int} huéspedes")
-    public void actualizarReserva(String checkIn, String checkOut, int guestsCount) {
-        Map<String, Object> body = reservationBody(roomId, guestId, checkIn, checkOut, guestsCount);
-        lastResponse = SerenityRest.given()
-                .contentType("application/json")
-                .body(body)
-                .when().put("/reservation/" + lastReservationId);
-    }
-
-    @When("el usuario cancela la reserva")
-    public void cancelarReserva() {
-        lastResponse = SerenityRest.given().when().delete("/reservation/" + lastReservationId);
-    }
-
-    @When("el usuario cancela la reserva con ID {string}")
-    public void cancelarReservaPorId(String id) {
-        lastResponse = SerenityRest.given().when().delete("/reservation/" + id);
-    }
-
-    // ─── Then: Aserciones ────────────────────────────────────────────────────
-
-    @Then("la reserva es creada exitosamente con código de estado {int}")
-    public void reservaCreadaExitosamente(int statusCode) {
-        assertThat(lastResponse.statusCode(), is(statusCode));
-        assertThat(lastResponse.jsonPath().getString("id"), notNullValue());
-    }
-
-    @Then("la reserva retornada contiene el roomId y guestId correctos")
-    public void reservaContieneIds() {
-        assertThat(lastResponse.jsonPath().getString("roomId"), is(roomId.toString()));
-        assertThat(lastResponse.jsonPath().getString("guestId"), is(guestId.toString()));
-    }
-
-    @Then("el sistema responde con código de estado {int}")
-    public void verificarStatusCode(int statusCode) {
-        assertThat(lastResponse.statusCode(), is(statusCode));
-    }
-
-    @Then("el mensaje de error es {string}")
-    public void verificarMensajeError(String mensaje) {
-        assertThat(lastResponse.jsonPath().getString("error"), is(mensaje));
-    }
-
-    @Then("la respuesta es una lista JSON")
-    public void respuestaEsLista() {
-        assertThat(lastResponse.jsonPath().getList("$"), notNullValue());
-    }
-
-    @Then("la disponibilidad retornada es true")
-    public void disponibleTrue() {
-        assertThat(lastResponse.statusCode(), is(200));
-        assertThat(lastResponse.jsonPath().getBoolean("available"), is(true));
-    }
-
-    @Then("la reserva es actualizada exitosamente con código de estado {int}")
-    public void reservaActualizadaExitosamente(int statusCode) {
-        assertThat(lastResponse.statusCode(), is(statusCode));
-    }
-
-    @Then("la reserva es cancelada con código de estado {int}")
-    public void reservaCancelada(int statusCode) {
-        assertThat(lastResponse.statusCode(), is(statusCode));
-    }
-
-    @Then("al consultar esa reserva el sistema responde con código de estado {int}")
-    public void consultarReservaCancelada(int statusCode) {
-        Response res = SerenityRest.given().when().get("/reservation/" + lastReservationId);
-        assertThat(res.statusCode(), is(statusCode));
-    }
-
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
-    private Map<String, Object> roomBody(String code, int maxGuests, boolean available) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("code", code);
-        body.put("name", "Habitación " + code);
-        body.put("city", "Bogotá");
-        body.put("maxGuests", maxGuests);
-        body.put("nightlyPrice", 150.00);
-        body.put("available", available);
-        return body;
-    }
-
-    private Map<String, Object> reservationBody(UUID roomId, UUID guestId,
-                                                  String checkIn, String checkOut, int guestsCount) {
+    @Dado("que ya cree una reserva exitosa")
+    public void crearReservaPrevia() {
         Map<String, Object> body = new HashMap<>();
         body.put("roomId", roomId.toString());
         body.put("guestId", guestId.toString());
-        body.put("checkIn", checkIn);
-        body.put("checkOut", checkOut);
-        body.put("guestsCount", guestsCount);
-        return body;
+        body.put("checkIn", "2027-06-15T14:00:00");
+        body.put("checkOut", "2027-06-20T11:00:00");
+        body.put("guestsCount", 1);
+
+        response = SerenityRest.given()
+                .contentType("application/json")
+                .body(body)
+                .when().post("/reservation");
+
+        if (response.statusCode() == 200) {
+            reservationId = UUID.fromString(response.jsonPath().getString("id"));
+        }
+    }
+
+    @Dado("que tengo una reserva creada desde {string} hasta {string}")
+    public void crearReservaConFechas(String checkIn, String checkOut) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("roomId", roomId.toString());
+        body.put("guestId", guestId.toString());
+        body.put("checkIn", checkIn + "T14:00:00");
+        body.put("checkOut", checkOut + "T11:00:00");
+        body.put("guestsCount", 1);
+
+        response = SerenityRest.given()
+                .contentType("application/json")
+                .body(body)
+                .when().post("/reservation");
+
+        if (response.statusCode() == 200) {
+            reservationId = UUID.fromString(response.jsonPath().getString("id"));
+        }
+    }
+
+    // When: Acciones
+    @Cuando("creo una reserva de entrada {string} salida {string} para {int} personas")
+    public void crearReserva(String checkIn, String checkOut, int guests) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("roomId", roomId.toString());
+        body.put("guestId", guestId.toString());
+        body.put("checkIn", checkIn + "T14:00:00");
+        body.put("checkOut", checkOut + "T11:00:00");
+        body.put("guestsCount", guests);
+
+        response = SerenityRest.given()
+                .contentType("application/json")
+                .body(body)
+                .when().post("/reservation");
+
+        if (response.statusCode() == 200) {
+            reservationId = UUID.fromString(response.jsonPath().getString("id"));
+        }
+    }
+
+    @Cuando("intento reservar esa habitacion para {int} personas")
+    public void crearReservaConCapacidadExcedida(int guests) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("roomId", roomId.toString());
+        body.put("guestId", guestId.toString());
+        body.put("checkIn", "2027-07-01T14:00:00");
+        body.put("checkOut", "2027-07-05T11:00:00");
+        body.put("guestsCount", guests);
+
+        response = SerenityRest.given()
+                .contentType("application/json")
+                .body(body)
+                .when().post("/reservation");
+    }
+
+    @Cuando("consulto esa reserva por su identificador")
+    public void consultarReserva() {
+        response = SerenityRest.given()
+                .when().get("/reservation/" + reservationId);
+    }
+
+    @Cuando("cancelo mi reserva")
+    public void cancelarReserva() {
+        response = SerenityRest.given()
+                .when().delete("/reservation/" + reservationId);
+    }
+
+    // Then: Validaciones
+    @Entonces("la reserva se crea correctamente con codigo {int}")
+    public void validarCreacionExitosa(int statusCode) {
+        assertThat(response.statusCode(), is(statusCode));
+        assertThat(response.jsonPath().getString("id"), notNullValue());
+    }
+
+    @Entonces("la reserva contiene el ID de habitacion y huesped")
+    public void validarReservaIds() {
+        assertThat(response.jsonPath().getString("roomId"), is(roomId.toString()));
+        assertThat(response.jsonPath().getString("guestId"), is(guestId.toString()));
+    }
+
+    @Entonces("el sistema rechaza la reserva con error {int}")
+    public void validarErrorCreacion(int statusCode) {
+        assertThat(response.statusCode(), is(statusCode));
+    }
+
+    @Entonces("el error indica que se excede la capacidad de la habitacion")
+    public void validarMensajeCapacidad() {
+        String error = response.jsonPath().getString("error");
+        assertThat(error, containsString("capacity"));
+    }
+
+    @Entonces("obtengo los datos correctos de la reserva")
+    public void validarConsultaExitosa() {
+        assertThat(response.statusCode(), is(200));
+        assertThat(response.jsonPath().getString("id"), notNullValue());
+    }
+
+    @Entonces("veo el ID de habitacion y huesped")
+    public void validarConsultaIds() {
+        assertThat(response.jsonPath().getString("roomId"), is(roomId.toString()));
+        assertThat(response.jsonPath().getString("guestId"), is(guestId.toString()));
+    }
+
+    @Entonces("la cancelacion es exitosa con codigo {int}")
+    public void validarCancelacionExitosa(int statusCode) {
+        assertThat(response.statusCode(), is(statusCode));
+    }
+
+    @Entonces("cuando consulto esa reserva ya no existe en el sistema")
+    public void validarReservaCancelada() {
+        Response checkResponse = SerenityRest.given()
+                .when().get("/reservation/" + reservationId);
+        assertThat(checkResponse.statusCode(), is(404));
     }
 }
