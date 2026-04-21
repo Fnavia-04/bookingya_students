@@ -59,7 +59,7 @@ jobs:
           cache: maven
 
       - name: Ejecutar pruebas BDD (Serenity/Cucumber)
-        run: mvn -B -V verify
+        run: cd fase2 && mvn -B -V verify
 
       - name: Subir artefactos BDD
         if: always()
@@ -67,9 +67,9 @@ jobs:
         with:
           name: fase2-bdd-reports
           path: |
-            target/site/serenity/**
-            target/cucumber-reports/**
-            target/site/*
+            fase2/target/site/serenity/**
+            fase2/target/cucumber-reports/**
+            fase2/target/site/*
 
   test-summary:
     name: Test Summary
@@ -81,12 +81,14 @@ jobs:
         with:
           name: fase1-tdd-reports
           path: artifacts/fase1
+        continue-on-error: true
 
       - name: Descargar artefactos FASE 2
         uses: actions/download-artifact@v4
         with:
           name: fase2-bdd-reports
           path: artifacts/fase2
+        continue-on-error: true
 
       - name: Mostrar resumen rápido de artefactos
         run: |
