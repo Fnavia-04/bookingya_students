@@ -1,10 +1,9 @@
-package com.project.bookingya.services;
+﻿package com.project.bookingya.services;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -39,18 +38,18 @@ import com.project.bookingya.shared.Constants;
  * 
  * FASE 1 - Test-Driven Development (TDD):
  * Este test suite automatiza pruebas unitarias que validan:
- * ✓ Creación de una reserva con validación de reglas de negocio
- * ✓ Consulta de una reserva por ID
- * ✓ Actualización de una reserva existente
- * ✓ Eliminación de una reserva
- * ✓ Obtención de reservas por diferentes criterios (ID, habitación, huésped, todas)
- * ✓ Verificación de disponibilidad de habitaciones
+ * âœ“ CreaciÃ³n de una reserva con validaciÃ³n de reglas de negocio
+ * âœ“ Consulta de una reserva por ID
+ * âœ“ ActualizaciÃ³n de una reserva existente
+ * âœ“ EliminaciÃ³n de una reserva
+ * âœ“ ObtenciÃ³n de reservas por diferentes criterios (ID, habitaciÃ³n, huÃ©sped, todas)
+ * âœ“ VerificaciÃ³n de disponibilidad de habitaciones
  * 
  * Patrones aplicados:
  * - TDD (Test-Driven Development)
- * - Patrón AAA (Arrange, Act, Assert)
+ * - PatrÃ³n AAA (Arrange, Act, Assert)
  * - Pruebas anidadas (@Nested) por funcionalidad
- * - Mockito para aislar la lógica del servicio
+ * - Mockito para aislar la lÃ³gica del servicio
  * - @DisplayName para descripciones legibles
  * - Datos de prueba reutilizables
  * 
@@ -58,7 +57,7 @@ import com.project.bookingya.shared.Constants;
  * @version 1.0
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ReservationService - Pruebas Unitarias FASE 1 TDD")
+@SuppressWarnings("unchecked")`n@DisplayName("ReservationService - Pruebas Unitarias FASE 1 TDD")
 class ReservationServiceTest {
 
     @Mock
@@ -131,13 +130,13 @@ class ReservationServiceTest {
         guestEntity.setId(guestId);
     }
 
-    // ==================== PRUEBAS DE CREACIÓN DE RESERVA ====================
+    // ==================== PRUEBAS DE CREACIÃ“N DE RESERVA ====================
     @Nested
-    @DisplayName("✓ CREAR RESERVA - Pruebas de funcionalidad y validación")
+    @DisplayName("âœ“ CREAR RESERVA - Pruebas de funcionalidad y validaciÃ³n")
     class CreateReservationTests {
 
         @Test
-        @DisplayName("Debe crear una reserva exitosamente con datos válidos")
+        @DisplayName("Debe crear una reserva exitosamente con datos vÃ¡lidos")
         void shouldCreateReservationSuccessfully() {
             // Arrange: configurar mocks para un flujo exitoso
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
@@ -159,13 +158,13 @@ class ReservationServiceTest {
             // Assert: verificar que la reserva fue creada correctamente
             assertNotNull(result, "La reserva no debe ser nula");
             assertEquals(reservationId, result.getId(), "El ID debe coincidir");
-            assertEquals(guestId, result.getGuestId(), "El ID del huésped debe coincidir");
-            assertEquals(roomId, result.getRoomId(), "El ID de la habitación debe coincidir");
-            assertEquals(2, result.getGuestsCount(), "La cantidad de huéspedes debe ser 2");
+            assertEquals(guestId, result.getGuestId(), "El ID del huÃ©sped debe coincidir");
+            assertEquals(roomId, result.getRoomId(), "El ID de la habitaciÃ³n debe coincidir");
+            assertEquals(2, result.getGuestsCount(), "La cantidad de huÃ©spedes debe ser 2");
             assertEquals(checkIn, result.getCheckIn(), "El checkIn debe coincidir");
             assertEquals(checkOut, result.getCheckOut(), "El checkOut debe coincidir");
             
-            // Verificar que los métodos fueron invocados correctamente
+            // Verificar que los mÃ©todos fueron invocados correctamente
             verify(roomRepository, times(1)).findById(roomId);
             verify(guestRepository, times(1)).findById(guestId);
             verify(reservationRepository, times(1)).saveAndFlush(any(ReservationEntity.class));
@@ -174,7 +173,7 @@ class ReservationServiceTest {
         @Test
         @DisplayName("Falla: Debe rechazar cuando checkOut es antes que checkIn")
         void shouldThrowExceptionWhenInvalidDateRange() {
-            // Arrange: crear DTO con fechas inválidas (checkOut < checkIn)
+            // Arrange: crear DTO con fechas invÃ¡lidas (checkOut < checkIn)
             ReservationDto invalidDto = new ReservationDto();
             invalidDto.setGuestId(guestId);
             invalidDto.setRoomId(roomId);
@@ -182,11 +181,11 @@ class ReservationServiceTest {
             invalidDto.setCheckOut(checkIn); // Invertido intencionalmente
             invalidDto.setGuestsCount(2);
 
-            // Act & Assert: verificar que se lance excepción BusinessRuleException
+            // Act & Assert: verificar que se lance excepciÃ³n BusinessRuleException
             BusinessRuleException exception = assertThrows(
                 BusinessRuleException.class,
                 () -> reservationService.create(invalidDto),
-                "Debe lanzar BusinessRuleException por rango de fechas inválido"
+                "Debe lanzar BusinessRuleException por rango de fechas invÃ¡lido"
             );
             assertTrue(exception.getMessage().contains(Constants.INVALID_RESERVATION_RANGE));
         }
@@ -194,42 +193,42 @@ class ReservationServiceTest {
         @Test
         @DisplayName("Falla: Debe rechazar cuando guestsCount es <= 0")
         void shouldThrowExceptionWhenInvalidGuestsCount() {
-            // Arrange: crear DTO con cantidad de huéspedes inválida
+            // Arrange: crear DTO con cantidad de huÃ©spedes invÃ¡lida
             ReservationDto invalidDto = new ReservationDto();
             invalidDto.setGuestId(guestId);
             invalidDto.setRoomId(roomId);
             invalidDto.setCheckIn(checkIn);
             invalidDto.setCheckOut(checkOut);
-            invalidDto.setGuestsCount(0); // Inválido: 0 huéspedes
+            invalidDto.setGuestsCount(0); // InvÃ¡lido: 0 huÃ©spedes
 
             // Act & Assert
             BusinessRuleException exception = assertThrows(
                 BusinessRuleException.class,
                 () -> reservationService.create(invalidDto),
-                "Debe lanzar excepción cuando guestsCount <= 0"
+                "Debe lanzar excepciÃ³n cuando guestsCount <= 0"
             );
             assertTrue(exception.getMessage().contains(Constants.INVALID_GUESTS_COUNT));
         }
 
         @Test
-        @DisplayName("Falla: Debe rechazar cuando la habitación no existe")
+        @DisplayName("Falla: Debe rechazar cuando la habitaciÃ³n no existe")
         void shouldThrowExceptionWhenRoomNotExists() {
-            // Arrange: mock retorna empty para habitación inexistente
+            // Arrange: mock retorna empty para habitaciÃ³n inexistente
             when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
 
             // Act & Assert
             EntityNotExistsException exception = assertThrows(
                 EntityNotExistsException.class,
                 () -> reservationService.create(reservationDto),
-                "Debe lanzar EntityNotExistsException cuando la habitación no existe"
+                "Debe lanzar EntityNotExistsException cuando la habitaciÃ³n no existe"
             );
             assertTrue(exception.getMessage().contains(Constants.ROOM_NOT_FOUND));
         }
 
         @Test
-        @DisplayName("Falla: Debe rechazar cuando el huésped no existe")
+        @DisplayName("Falla: Debe rechazar cuando el huÃ©sped no existe")
         void shouldThrowExceptionWhenGuestNotExists() {
-            // Arrange: habitación existe pero huésped no
+            // Arrange: habitaciÃ³n existe pero huÃ©sped no
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.empty());
 
@@ -237,15 +236,15 @@ class ReservationServiceTest {
             EntityNotExistsException exception = assertThrows(
                 EntityNotExistsException.class,
                 () -> reservationService.create(reservationDto),
-                "Debe lanzar EntityNotExistsException cuando el huésped no existe"
+                "Debe lanzar EntityNotExistsException cuando el huÃ©sped no existe"
             );
             assertTrue(exception.getMessage().contains(Constants.GUEST_NOT_FOUND));
         }
 
         @Test
-        @DisplayName("Falla: Debe rechazar cuando la habitación no está disponible")
+        @DisplayName("Falla: Debe rechazar cuando la habitaciÃ³n no estÃ¡ disponible")
         void shouldThrowExceptionWhenRoomNotAvailable() {
-            // Arrange: habitación con available = false
+            // Arrange: habitaciÃ³n con available = false
             roomEntity.setAvailable(false);
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
@@ -254,21 +253,21 @@ class ReservationServiceTest {
             BusinessRuleException exception = assertThrows(
                 BusinessRuleException.class,
                 () -> reservationService.create(reservationDto),
-                "Debe lanzar excepción cuando la habitación no está disponible"
+                "Debe lanzar excepciÃ³n cuando la habitaciÃ³n no estÃ¡ disponible"
             );
             assertTrue(exception.getMessage().contains(Constants.ROOM_NOT_AVAILABLE));
         }
 
         @Test
-        @DisplayName("Falla: Debe rechazar cuando la cantidad de huéspedes excede la capacidad")
+        @DisplayName("Falla: Debe rechazar cuando la cantidad de huÃ©spedes excede la capacidad")
         void shouldThrowExceptionWhenGuestsExceedCapacity() {
-            // Arrange: solicitar más huéspedes de los que la habitación puede alojar
+            // Arrange: solicitar mÃ¡s huÃ©spedes de los que la habitaciÃ³n puede alojar
             ReservationDto invalidDto = new ReservationDto();
             invalidDto.setGuestId(guestId);
             invalidDto.setRoomId(roomId);
             invalidDto.setCheckIn(checkIn);
             invalidDto.setCheckOut(checkOut);
-            invalidDto.setGuestsCount(5); // Habitación solo permite 4 (ver setUp)
+            invalidDto.setGuestsCount(5); // HabitaciÃ³n solo permite 4 (ver setUp)
 
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
@@ -277,15 +276,15 @@ class ReservationServiceTest {
             BusinessRuleException exception = assertThrows(
                 BusinessRuleException.class,
                 () -> reservationService.create(invalidDto),
-                "Debe lanzar excepción cuando guestsCount > maxGuests"
+                "Debe lanzar excepciÃ³n cuando guestsCount > maxGuests"
             );
             assertTrue(exception.getMessage().contains(Constants.ROOM_CAPACITY_EXCEEDED));
         }
 
         @Test
-        @DisplayName("Falla: Debe rechazar cuando hay superposición de reservas en la habitación")
+        @DisplayName("Falla: Debe rechazar cuando hay superposiciÃ³n de reservas en la habitaciÃ³n")
         void shouldThrowExceptionWhenRoomOverlaps() {
-            // Arrange: existe una reserva que se superpone en la habitación
+            // Arrange: existe una reserva que se superpone en la habitaciÃ³n
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
             when(reservationRepository.existsOverlappingReservationForRoom(
@@ -295,15 +294,15 @@ class ReservationServiceTest {
             BusinessRuleException exception = assertThrows(
                 BusinessRuleException.class,
                 () -> reservationService.create(reservationDto),
-                "Debe lanzar excepción cuando hay superposición de reservas en la habitación"
+                "Debe lanzar excepciÃ³n cuando hay superposiciÃ³n de reservas en la habitaciÃ³n"
             );
             assertTrue(exception.getMessage().contains(Constants.RESERVATION_OVERLAP_ROOM));
         }
 
         @Test
-        @DisplayName("Falla: Debe rechazar cuando hay superposición de reservas para el huésped")
+        @DisplayName("Falla: Debe rechazar cuando hay superposiciÃ³n de reservas para el huÃ©sped")
         void shouldThrowExceptionWhenGuestOverlaps() {
-            // Arrange: el huésped ya tiene una reserva que se superpone
+            // Arrange: el huÃ©sped ya tiene una reserva que se superpone
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
             when(reservationRepository.existsOverlappingReservationForRoom(
@@ -315,7 +314,7 @@ class ReservationServiceTest {
             BusinessRuleException exception = assertThrows(
                 BusinessRuleException.class,
                 () -> reservationService.create(reservationDto),
-                "Debe lanzar excepción cuando hay superposición de reservas para el huésped"
+                "Debe lanzar excepciÃ³n cuando hay superposiciÃ³n de reservas para el huÃ©sped"
             );
             assertTrue(exception.getMessage().contains(Constants.RESERVATION_OVERLAP_GUEST));
         }
@@ -323,7 +322,7 @@ class ReservationServiceTest {
 
     // ==================== PRUEBAS DE CONSULTA DE RESERVA POR ID ====================
     @Nested
-    @DisplayName("✓ OBTENER RESERVA POR ID - Pruebas de búsqueda")
+    @DisplayName("âœ“ OBTENER RESERVA POR ID - Pruebas de bÃºsqueda")
     class GetReservationByIdTests {
 
         @Test
@@ -338,11 +337,11 @@ class ReservationServiceTest {
             // Act: obtener la reserva por ID
             Reservation result = reservationService.getById(reservationId);
 
-            // Assert: verificar que se retornó la reserva correctamente
+            // Assert: verificar que se retornÃ³ la reserva correctamente
             assertNotNull(result, "La reserva no debe ser nula");
             assertEquals(reservationId, result.getId(), "El ID debe coincidir");
-            assertEquals(guestId, result.getGuestId(), "El ID del huésped debe coincidir");
-            assertEquals(roomId, result.getRoomId(), "El ID de la habitación debe coincidir");
+            assertEquals(guestId, result.getGuestId(), "El ID del huÃ©sped debe coincidir");
+            assertEquals(roomId, result.getRoomId(), "El ID de la habitaciÃ³n debe coincidir");
             assertEquals(checkIn, result.getCheckIn(), "El checkIn debe coincidir");
             assertEquals(checkOut, result.getCheckOut(), "El checkOut debe coincidir");
             
@@ -351,7 +350,7 @@ class ReservationServiceTest {
         }
 
         @Test
-        @DisplayName("Falla: Debe lanzar excepción cuando la reserva no existe")
+        @DisplayName("Falla: Debe lanzar excepciÃ³n cuando la reserva no existe")
         void shouldThrowExceptionWhenReservationNotExists() {
             // Arrange: mock retorna empty para reserva inexistente
             when(reservationRepository.findById(reservationId))
@@ -368,15 +367,15 @@ class ReservationServiceTest {
         }
     }
 
-    // ==================== PRUEBAS DE ACTUALIZACIÓN DE RESERVA ====================
+    // ==================== PRUEBAS DE ACTUALIZACIÃ“N DE RESERVA ====================
     @Nested
-    @DisplayName("✓ ACTUALIZAR RESERVA - Pruebas de modificación")
+    @DisplayName("âœ“ ACTUALIZAR RESERVA - Pruebas de modificaciÃ³n")
     class UpdateReservationTests {
 
         @Test
-        @DisplayName("Debe actualizar una reserva exitosamente con datos válidos")
+        @DisplayName("Debe actualizar una reserva exitosamente con datos vÃ¡lidos")
         void shouldUpdateReservationSuccessfully() {
-            // Arrange: preparar datos para la actualización
+            // Arrange: preparar datos para la actualizaciÃ³n
             Reservation updatedReservation = new Reservation();
             updatedReservation.setId(reservationId);
             updatedReservation.setGuestId(guestId);
@@ -430,9 +429,9 @@ class ReservationServiceTest {
         }
 
         @Test
-        @DisplayName("Falla: Debe rechazar cuando la actualización tiene fechas inválidas")
+        @DisplayName("Falla: Debe rechazar cuando la actualizaciÃ³n tiene fechas invÃ¡lidas")
         void shouldThrowExceptionWhenUpdatingWithInvalidDateRange() {
-            // Arrange: crear DTO con fechas inválidas
+            // Arrange: crear DTO con fechas invÃ¡lidas
             ReservationDto invalidDto = new ReservationDto();
             invalidDto.setGuestId(guestId);
             invalidDto.setRoomId(roomId);
@@ -447,15 +446,15 @@ class ReservationServiceTest {
             BusinessRuleException exception = assertThrows(
                 BusinessRuleException.class,
                 () -> reservationService.update(invalidDto, reservationId),
-                "Debe lanzar excepción cuando las fechas son inválidas"
+                "Debe lanzar excepciÃ³n cuando las fechas son invÃ¡lidas"
             );
             assertTrue(exception.getMessage().contains(Constants.INVALID_RESERVATION_RANGE));
         }
 
         @Test
-        @DisplayName("Falla: Debe rechazar cuando la habitación no está disponible durante la actualización")
+        @DisplayName("Falla: Debe rechazar cuando la habitaciÃ³n no estÃ¡ disponible durante la actualizaciÃ³n")
         void shouldThrowExceptionWhenUpdatingWithUnavailableRoom() {
-            // Arrange: habitación no disponible
+            // Arrange: habitaciÃ³n no disponible
             RoomEntity unavailableRoom = new RoomEntity();
             unavailableRoom.setAvailable(false);
             
@@ -468,15 +467,15 @@ class ReservationServiceTest {
             BusinessRuleException exception = assertThrows(
                 BusinessRuleException.class,
                 () -> reservationService.update(reservationDto, reservationId),
-                "Debe lanzar excepción cuando la habitación no está disponible"
+                "Debe lanzar excepciÃ³n cuando la habitaciÃ³n no estÃ¡ disponible"
             );
             assertTrue(exception.getMessage().contains(Constants.ROOM_NOT_AVAILABLE));
         }
     }
 
-    // ==================== PRUEBAS DE ELIMINACIÓN DE RESERVA ====================
+    // ==================== PRUEBAS DE ELIMINACIÃ“N DE RESERVA ====================
     @Nested
-    @DisplayName("✓ ELIMINAR RESERVA - Pruebas de borrado")
+    @DisplayName("âœ“ ELIMINAR RESERVA - Pruebas de borrado")
     class DeleteReservationTests {
 
         @Test
@@ -489,10 +488,10 @@ class ReservationServiceTest {
             // Act: eliminar la reserva
             assertDoesNotThrow(
                 () -> reservationService.delete(reservationId),
-                "No debe lanzar excepción al eliminar una reserva existente"
+                "No debe lanzar excepciÃ³n al eliminar una reserva existente"
             );
 
-            // Assert: verificar que se invocaron los métodos correctos
+            // Assert: verificar que se invocaron los mÃ©todos correctos
             verify(reservationRepository, times(1)).findById(reservationId);
             verify(reservationRepository, times(1)).delete(reservationEntity);
             verify(reservationRepository, times(1)).flush();
@@ -518,9 +517,9 @@ class ReservationServiceTest {
         }
     }
 
-    // ==================== PRUEBAS DE CONSULTA Y RECUPERACIÓN DE RESERVAS ====================
+    // ==================== PRUEBAS DE CONSULTA Y RECUPERACIÃ“N DE RESERVAS ====================
     @Nested
-    @DisplayName("✓ CONSULTAR RESERVAS - Pruebas de búsqueda y filtrado")
+    @DisplayName("âœ“ CONSULTAR RESERVAS - Pruebas de bÃºsqueda y filtrado")
     class QueryReservationTests {
 
         @Test
@@ -550,7 +549,7 @@ class ReservationServiceTest {
         }
 
         @Test
-        @DisplayName("Debe obtener reservas por ID de habitación")
+        @DisplayName("Debe obtener reservas por ID de habitaciÃ³n")
         void shouldGetReservationsByRoomIdSuccessfully() {
             // Arrange
             List<ReservationEntity> entities = Arrays.asList(reservationEntity);
@@ -560,7 +559,7 @@ class ReservationServiceTest {
             when(mapper.map(entities, new TypeToken<List<Reservation>>() {}.getType()))
                 .thenReturn(reservations);
 
-            // Act: obtener reservas de una habitación
+            // Act: obtener reservas de una habitaciÃ³n
             List<Reservation> result = reservationService.getByRoomId(roomId);
 
             // Assert
@@ -570,7 +569,7 @@ class ReservationServiceTest {
         }
 
         @Test
-        @DisplayName("Debe obtener reservas por ID de huésped")
+        @DisplayName("Debe obtener reservas por ID de huÃ©sped")
         void shouldGetReservationsByGuestIdSuccessfully() {
             // Arrange
             List<ReservationEntity> entities = Arrays.asList(reservationEntity);
@@ -580,7 +579,7 @@ class ReservationServiceTest {
             when(mapper.map(entities, new TypeToken<List<Reservation>>() {}.getType()))
                 .thenReturn(reservations);
 
-            // Act: obtener reservas de un huésped
+            // Act: obtener reservas de un huÃ©sped
             List<Reservation> result = reservationService.getByGuestId(guestId);
 
             // Assert
@@ -590,7 +589,7 @@ class ReservationServiceTest {
         }
 
         @Test
-        @DisplayName("Debe retornar una lista vacía cuando no existen reservas")
+        @DisplayName("Debe retornar una lista vacÃ­a cuando no existen reservas")
         void shouldReturnEmptyListWhenNoReservations() {
             // Arrange
             when(reservationRepository.findAll()).thenReturn(Arrays.asList());
@@ -602,17 +601,17 @@ class ReservationServiceTest {
 
             // Assert
             assertNotNull(result, "La lista no debe ser nula");
-            assertEquals(0, result.size(), "La lista debe estar vacía");
+            assertEquals(0, result.size(), "La lista debe estar vacÃ­a");
         }
     }
 
-    // ==================== PRUEBAS DE DISPONIBILIDAD DE HABITACIÓN ====================
+    // ==================== PRUEBAS DE DISPONIBILIDAD DE HABITACIÃ“N ====================
     @Nested
-    @DisplayName("✓ DISPONIBILIDAD DE HABITACIÓN - Pruebas de validación")
+    @DisplayName("âœ“ DISPONIBILIDAD DE HABITACIÃ“N - Pruebas de validaciÃ³n")
     class RoomAvailabilityTests {
 
         @Test
-        @DisplayName("Debe confirmar que una habitación está disponible para las fechas especificadas")
+        @DisplayName("Debe confirmar que una habitaciÃ³n estÃ¡ disponible para las fechas especificadas")
         void shouldReturnTrueWhenRoomIsAvailable() {
             // Arrange: configurar mocks para indicar disponibilidad
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
@@ -623,14 +622,14 @@ class ReservationServiceTest {
             boolean result = reservationService.isRoomAvailable(roomId, checkIn, checkOut);
 
             // Assert
-            assertTrue(result, "La habitación debe estar disponible");
+            assertTrue(result, "La habitaciÃ³n debe estar disponible");
             verify(roomRepository, times(1)).findById(roomId);
             verify(reservationRepository, times(1)).existsOverlappingReservationForRoom(
                 roomId, checkIn, checkOut, null);
         }
 
         @Test
-        @DisplayName("Debe confirmar que una habitación NO está disponible cuando hay superposición")
+        @DisplayName("Debe confirmar que una habitaciÃ³n NO estÃ¡ disponible cuando hay superposiciÃ³n")
         void shouldReturnFalseWhenRoomNotAvailable() {
             // Arrange: configurar mocks para indicar NO disponibilidad
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
@@ -641,34 +640,36 @@ class ReservationServiceTest {
             boolean result = reservationService.isRoomAvailable(roomId, checkIn, checkOut);
 
             // Assert
-            assertFalse(result, "La habitación no debe estar disponible por superposición");
+            assertFalse(result, "La habitaciÃ³n no debe estar disponible por superposiciÃ³n");
         }
 
         @Test
-        @DisplayName("Falla: Debe lanzar excepción si la habitación no existe")
+        @DisplayName("Falla: Debe lanzar excepciÃ³n si la habitaciÃ³n no existe")
         void shouldThrowExceptionWhenCheckingAvailabilityOfNonExistentRoom() {
-            // Arrange: habitación no existe
+            // Arrange: habitaciÃ³n no existe
             when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
 
             // Act & Assert
             EntityNotExistsException exception = assertThrows(
                 EntityNotExistsException.class,
                 () -> reservationService.isRoomAvailable(roomId, checkIn, checkOut),
-                "Debe lanzar EntityNotExistsException si la habitación no existe"
+                "Debe lanzar EntityNotExistsException si la habitaciÃ³n no existe"
             );
             assertTrue(exception.getMessage().contains(Constants.ROOM_NOT_FOUND));
         }
 
         @Test
-        @DisplayName("Falla: Debe lanzar excepción si el rango de fechas es inválido")
+        @DisplayName("Falla: Debe lanzar excepciÃ³n si el rango de fechas es invÃ¡lido")
         void shouldThrowExceptionWhenCheckingAvailabilityWithInvalidDateRange() {
-            // Act & Assert: no se debe ni verificar existencia de habitación
+            // Act & Assert: no se debe ni verificar existencia de habitaciÃ³n
             BusinessRuleException exception = assertThrows(
                 BusinessRuleException.class,
                 () -> reservationService.isRoomAvailable(roomId, checkOut, checkIn),
-                "Debe lanzar excepción cuando las fechas son inválidas"
+                "Debe lanzar excepciÃ³n cuando las fechas son invÃ¡lidas"
             );
             assertTrue(exception.getMessage().contains(Constants.INVALID_RESERVATION_RANGE));
         }
     }
 }
+
+

@@ -1,4 +1,4 @@
-name: FASE 3 - ATDD con Playwright
+﻿name: FASE 3 - ATDD con Playwright
 
 on:
   push:
@@ -28,9 +28,12 @@ jobs:
     - name: Compilar TypeScript
       run: cd fase3 && npx tsc --noEmit
 
-    - name: Publicar configuracion y tests
+    - name: Ejecutar tests ATDD con Playwright
+      run: cd fase3 && npm test
+
+    - name: Publicar reporte Playwright
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: playwright-config-fase3
-        path: fase3/tests/
+        name: playwright-report-fase3
+        path: fase3/playwright-report/

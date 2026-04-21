@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 import {
   createRoom, createGuest, createReservation, futureDate,
   type Reservation
 } from './helpers';
 
 /**
- * FASE 3 — ATDD (Acceptance Test Driven Development)
+ * FASE 3 â€” ATDD (Acceptance Test Driven Development)
  * 
  * Pruebas de aceptacion con Playwright + TypeScript.
  * 
@@ -93,4 +93,46 @@ test('El usuario puede consultar y luego cancelar su reserva', async ({ request 
   
   // Validacion: ya no existe
   expect(checkRes.status()).toBe(404);
+});
+
+// Test 4: Verificar disponibilidad de habitación
+test('El usuario puede verificar la disponibilidad de una habitación', async ({ request }) => {
+  // Preparacion: existe una habitacion
+  const room = await createRoom(request, 'H-DISP', 4, true);
+
+  // Accion: verificar disponibilidad en un rango de fechas
+  const res = await request.get(/room/${room.id}/availability, {
+    params: {
+      checkIn: futureDate(8),
+      checkOut: futureDate(12),
+    },
+  });
+
+  // Validacion: la habitacion debe estar disponible
+  expect(res.status()).toBe(200);
+  const body = await res.json();
+  expect(body.available).toBe(true);
+});
+
+// Test 5: Rechazar reserva con fechas inválidas
+test('El usuario no puede crear una reserva con fechas inválidas', async ({ request }) => {
+  // Preparacion
+  const room = await createRoom(request, 'H-004', 2, true);
+  const guest = await createGuest(request, 'C-004');
+
+  // Accion: intentar reservar con checkOut antes que checkIn
+  const res = await request.post('/reservation', {
+    data: {
+      roomId: room.id,
+      guestId: guest.id,
+      checkIn: futureDate(20),
+      checkOut: futureDate(15),
+      guestsCount: 1,
+    },
+  });
+
+  // Validacion: debe rechazar con error 400
+  expect(res.status()).toBe(400);
+  const body = await res.json();
+  expect(body.error).toContain('fecha');
 });
