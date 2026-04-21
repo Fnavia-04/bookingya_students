@@ -1,4 +1,4 @@
-﻿package com.project.bookingya.services;
+package com.project.bookingya.services;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -58,7 +58,7 @@ import com.project.bookingya.shared.Constants;
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("unchecked")
-@DisplayName("ReservationService - Pruebas Unitarias FASE 1 TDD")
+@SuppressWarnings("unchecked")`n@DisplayName("ReservationService - Pruebas Unitarias FASE 1 TDD")
 class ReservationServiceTest {
 
     @Mock
