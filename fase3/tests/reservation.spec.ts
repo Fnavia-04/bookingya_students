@@ -101,7 +101,7 @@ test('El usuario puede verificar la disponibilidad de una habitación', async ({
   const room = await createRoom(request, 'H-DISP', 4, true);
 
   // Accion: verificar disponibilidad en un rango de fechas
-  const res = await request.get(/room/${room.id}/availability, {
+  const res = await request.get(`/room/${room.id}/availability`, {
     params: {
       checkIn: futureDate(8),
       checkOut: futureDate(12),
