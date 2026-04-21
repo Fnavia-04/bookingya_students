@@ -1,28 +1,31 @@
 package com.project.bookingya.services;
 
-/**
- * NOTA: Los tests unitarios reales se encuentran en fase1/src/test/java/com/project/bookingya/ReservationServiceTDDTest.java
- * Este archivo está vacío en el root del proyecto ya que los tests se ejecutan en fase1.
- */
-class ReservationServiceTest {
-}
-package com.project.bookingya.services;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-/**
- * NOTA: Los tests unitarios reales se encuentran en fase1/src/test/java/com/project/bookingya/ReservationServiceTDDTest.java
- * Este archivo está vacío en el root del proyecto ya que los tests se ejecutan en fase1.
- */
-class ReservationServiceTest {
-}
+import java.lang.reflect.Type;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 
 import com.project.bookingya.dtos.ReservationDto;
+import com.project.bookingya.entities.GuestEntity;
 import com.project.bookingya.entities.ReservationEntity;
 import com.project.bookingya.entities.RoomEntity;
-import com.project.bookingya.entities.GuestEntity;
 import com.project.bookingya.exceptions.BusinessRuleException;
 import com.project.bookingya.exceptions.EntityNotExistsException;
 import com.project.bookingya.models.Reservation;
@@ -31,8 +34,31 @@ import com.project.bookingya.repositories.IReservationRepository;
 import com.project.bookingya.repositories.IRoomRepository;
 import com.project.bookingya.shared.Constants;
 
+/**
+ * Pruebas unitarias para el servicio de reservas (ReservationService).
+ * 
+ * FASE 1 - Test-Driven Development (TDD):
+ * Este test suite automatiza pruebas unitarias que validan:
+ * ✓ Creación de una reserva con validación de reglas de negocio
+ * ✓ Consulta de una reserva por ID
+ * ✓ Actualización de una reserva existente
+ * ✓ Eliminación de una reserva
+ * ✓ Obtención de reservas por diferentes criterios (ID, habitación, huésped, todas)
+ * ✓ Verificación de disponibilidad de habitaciones
+ * 
+ * Patrones aplicados:
+ * - TDD (Test-Driven Development)
+ * - Patrón AAA (Arrange, Act, Assert)
+ * - Pruebas anidadas (@Nested) por funcionalidad
+ * - Mockito para aislar la lógica del servicio
+ * - @DisplayName para descripciones legibles
+ * - Datos de prueba reutilizables
+ * 
+ * @author Equipo de QA - Fase 1
+ * @version 1.0
+ */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ReservationService Unit Tests")
+@DisplayName("ReservationService - Pruebas Unitarias FASE 1 TDD")
 class ReservationServiceTest {
 
     @Mock
@@ -50,6 +76,7 @@ class ReservationServiceTest {
     @InjectMocks
     private ReservationService reservationService;
 
+    // ==================== DATOS DE PRUEBA ====================
     private UUID reservationId;
     private UUID guestId;
     private UUID roomId;
@@ -104,14 +131,15 @@ class ReservationServiceTest {
         guestEntity.setId(guestId);
     }
 
+    // ==================== PRUEBAS DE CREACIÓN DE RESERVA ====================
     @Nested
-    @DisplayName("Create Reservation Tests")
+    @DisplayName("✓ CREAR RESERVA - Pruebas de funcionalidad y validación")
     class CreateReservationTests {
 
         @Test
-        @DisplayName("Should create a reservation successfully with valid data")
+        @DisplayName("Debe crear una reserva exitosamente con datos válidos")
         void shouldCreateReservationSuccessfully() {
-            // Arrange
+            // Arrange: configurar mocks para un flujo exitoso
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
             when(reservationRepository.existsOverlappingReservationForRoom(
@@ -125,130 +153,157 @@ class ReservationServiceTest {
             when(mapper.map(reservationEntity, Reservation.class))
                 .thenReturn(reservation);
 
-            // Act
+            // Act: crear la reserva
             Reservation result = reservationService.create(reservationDto);
 
-            // Assert
-            assertNotNull(result);
-            assertEquals(reservationId, result.getId());
-            assertEquals(guestId, result.getGuestId());
-            assertEquals(roomId, result.getRoomId());
-            assertEquals(2, result.getGuestsCount());
+            // Assert: verificar que la reserva fue creada correctamente
+            assertNotNull(result, "La reserva no debe ser nula");
+            assertEquals(reservationId, result.getId(), "El ID debe coincidir");
+            assertEquals(guestId, result.getGuestId(), "El ID del huésped debe coincidir");
+            assertEquals(roomId, result.getRoomId(), "El ID de la habitación debe coincidir");
+            assertEquals(2, result.getGuestsCount(), "La cantidad de huéspedes debe ser 2");
+            assertEquals(checkIn, result.getCheckIn(), "El checkIn debe coincidir");
+            assertEquals(checkOut, result.getCheckOut(), "El checkOut debe coincidir");
+            
+            // Verificar que los métodos fueron invocados correctamente
+            verify(roomRepository, times(1)).findById(roomId);
+            verify(guestRepository, times(1)).findById(guestId);
             verify(reservationRepository, times(1)).saveAndFlush(any(ReservationEntity.class));
         }
 
         @Test
-        @DisplayName("Should throw BusinessRuleException when check-out is before check-in")
+        @DisplayName("Falla: Debe rechazar cuando checkOut es antes que checkIn")
         void shouldThrowExceptionWhenInvalidDateRange() {
-            // Arrange
+            // Arrange: crear DTO con fechas inválidas (checkOut < checkIn)
             ReservationDto invalidDto = new ReservationDto();
             invalidDto.setGuestId(guestId);
             invalidDto.setRoomId(roomId);
             invalidDto.setCheckIn(checkOut);
-            invalidDto.setCheckOut(checkIn);
+            invalidDto.setCheckOut(checkIn); // Invertido intencionalmente
             invalidDto.setGuestsCount(2);
 
-            // Act & Assert
-            assertThrows(BusinessRuleException.class, () -> {
-                reservationService.create(invalidDto);
-            });
+            // Act & Assert: verificar que se lance excepción BusinessRuleException
+            BusinessRuleException exception = assertThrows(
+                BusinessRuleException.class,
+                () -> reservationService.create(invalidDto),
+                "Debe lanzar BusinessRuleException por rango de fechas inválido"
+            );
+            assertTrue(exception.getMessage().contains(Constants.INVALID_RESERVATION_RANGE));
         }
 
         @Test
-        @DisplayName("Should throw BusinessRuleException when guests count is invalid")
+        @DisplayName("Falla: Debe rechazar cuando guestsCount es <= 0")
         void shouldThrowExceptionWhenInvalidGuestsCount() {
-            // Arrange
+            // Arrange: crear DTO con cantidad de huéspedes inválida
             ReservationDto invalidDto = new ReservationDto();
             invalidDto.setGuestId(guestId);
             invalidDto.setRoomId(roomId);
             invalidDto.setCheckIn(checkIn);
             invalidDto.setCheckOut(checkOut);
-            invalidDto.setGuestsCount(0);
+            invalidDto.setGuestsCount(0); // Inválido: 0 huéspedes
 
             // Act & Assert
-            assertThrows(BusinessRuleException.class, () -> {
-                reservationService.create(invalidDto);
-            });
+            BusinessRuleException exception = assertThrows(
+                BusinessRuleException.class,
+                () -> reservationService.create(invalidDto),
+                "Debe lanzar excepción cuando guestsCount <= 0"
+            );
+            assertTrue(exception.getMessage().contains(Constants.INVALID_GUESTS_COUNT));
         }
 
         @Test
-        @DisplayName("Should throw EntityNotExistsException when room does not exist")
+        @DisplayName("Falla: Debe rechazar cuando la habitación no existe")
         void shouldThrowExceptionWhenRoomNotExists() {
-            // Arrange
+            // Arrange: mock retorna empty para habitación inexistente
             when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
 
             // Act & Assert
-            assertThrows(EntityNotExistsException.class, () -> {
-                reservationService.create(reservationDto);
-            });
+            EntityNotExistsException exception = assertThrows(
+                EntityNotExistsException.class,
+                () -> reservationService.create(reservationDto),
+                "Debe lanzar EntityNotExistsException cuando la habitación no existe"
+            );
+            assertTrue(exception.getMessage().contains(Constants.ROOM_NOT_FOUND));
         }
 
         @Test
-        @DisplayName("Should throw EntityNotExistsException when guest does not exist")
+        @DisplayName("Falla: Debe rechazar cuando el huésped no existe")
         void shouldThrowExceptionWhenGuestNotExists() {
-            // Arrange
+            // Arrange: habitación existe pero huésped no
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.empty());
 
             // Act & Assert
-            assertThrows(EntityNotExistsException.class, () -> {
-                reservationService.create(reservationDto);
-            });
+            EntityNotExistsException exception = assertThrows(
+                EntityNotExistsException.class,
+                () -> reservationService.create(reservationDto),
+                "Debe lanzar EntityNotExistsException cuando el huésped no existe"
+            );
+            assertTrue(exception.getMessage().contains(Constants.GUEST_NOT_FOUND));
         }
 
         @Test
-        @DisplayName("Should throw BusinessRuleException when room is not available")
+        @DisplayName("Falla: Debe rechazar cuando la habitación no está disponible")
         void shouldThrowExceptionWhenRoomNotAvailable() {
-            // Arrange
+            // Arrange: habitación con available = false
             roomEntity.setAvailable(false);
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
 
             // Act & Assert
-            assertThrows(BusinessRuleException.class, () -> {
-                reservationService.create(reservationDto);
-            });
+            BusinessRuleException exception = assertThrows(
+                BusinessRuleException.class,
+                () -> reservationService.create(reservationDto),
+                "Debe lanzar excepción cuando la habitación no está disponible"
+            );
+            assertTrue(exception.getMessage().contains(Constants.ROOM_NOT_AVAILABLE));
         }
 
         @Test
-        @DisplayName("Should throw BusinessRuleException when guests exceed room capacity")
+        @DisplayName("Falla: Debe rechazar cuando la cantidad de huéspedes excede la capacidad")
         void shouldThrowExceptionWhenGuestsExceedCapacity() {
-            // Arrange
+            // Arrange: solicitar más huéspedes de los que la habitación puede alojar
             ReservationDto invalidDto = new ReservationDto();
             invalidDto.setGuestId(guestId);
             invalidDto.setRoomId(roomId);
             invalidDto.setCheckIn(checkIn);
             invalidDto.setCheckOut(checkOut);
-            invalidDto.setGuestsCount(5); // Room has max 4 guests
+            invalidDto.setGuestsCount(5); // Habitación solo permite 4 (ver setUp)
 
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
 
             // Act & Assert
-            assertThrows(BusinessRuleException.class, () -> {
-                reservationService.create(invalidDto);
-            });
+            BusinessRuleException exception = assertThrows(
+                BusinessRuleException.class,
+                () -> reservationService.create(invalidDto),
+                "Debe lanzar excepción cuando guestsCount > maxGuests"
+            );
+            assertTrue(exception.getMessage().contains(Constants.ROOM_CAPACITY_EXCEEDED));
         }
 
         @Test
-        @DisplayName("Should throw BusinessRuleException when room has overlapping reservations")
+        @DisplayName("Falla: Debe rechazar cuando hay superposición de reservas en la habitación")
         void shouldThrowExceptionWhenRoomOverlaps() {
-            // Arrange
+            // Arrange: existe una reserva que se superpone en la habitación
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
             when(reservationRepository.existsOverlappingReservationForRoom(
                 roomId, checkIn, checkOut, null)).thenReturn(true);
 
             // Act & Assert
-            assertThrows(BusinessRuleException.class, () -> {
-                reservationService.create(reservationDto);
-            });
+            BusinessRuleException exception = assertThrows(
+                BusinessRuleException.class,
+                () -> reservationService.create(reservationDto),
+                "Debe lanzar excepción cuando hay superposición de reservas en la habitación"
+            );
+            assertTrue(exception.getMessage().contains(Constants.RESERVATION_OVERLAP_ROOM));
         }
 
         @Test
-        @DisplayName("Should throw BusinessRuleException when guest has overlapping reservations")
+        @DisplayName("Falla: Debe rechazar cuando hay superposición de reservas para el huésped")
         void shouldThrowExceptionWhenGuestOverlaps() {
-            // Arrange
+            // Arrange: el huésped ya tiene una reserva que se superpone
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
             when(reservationRepository.existsOverlappingReservationForRoom(
@@ -257,152 +312,363 @@ class ReservationServiceTest {
                 guestId, checkIn, checkOut, null)).thenReturn(true);
 
             // Act & Assert
-            assertThrows(BusinessRuleException.class, () -> {
-                reservationService.create(reservationDto);
-            });
+            BusinessRuleException exception = assertThrows(
+                BusinessRuleException.class,
+                () -> reservationService.create(reservationDto),
+                "Debe lanzar excepción cuando hay superposición de reservas para el huésped"
+            );
+            assertTrue(exception.getMessage().contains(Constants.RESERVATION_OVERLAP_GUEST));
         }
     }
 
+    // ==================== PRUEBAS DE CONSULTA DE RESERVA POR ID ====================
     @Nested
-    @DisplayName("Get Reservation by ID Tests")
+    @DisplayName("✓ OBTENER RESERVA POR ID - Pruebas de búsqueda")
     class GetReservationByIdTests {
 
         @Test
-        @DisplayName("Should retrieve reservation by ID successfully")
+        @DisplayName("Debe obtener una reserva existente por su ID")
         void shouldGetReservationByIdSuccessfully() {
-            // Arrange
+            // Arrange: configurar mock para retornar una reserva existente
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.of(reservationEntity));
             when(mapper.map(reservationEntity, Reservation.class))
                 .thenReturn(reservation);
 
-            // Act
+            // Act: obtener la reserva por ID
             Reservation result = reservationService.getById(reservationId);
 
-            // Assert
-            assertNotNull(result);
-            assertEquals(reservationId, result.getId());
-            assertEquals(guestId, result.getGuestId());
-            assertEquals(roomId, result.getRoomId());
+            // Assert: verificar que se retornó la reserva correctamente
+            assertNotNull(result, "La reserva no debe ser nula");
+            assertEquals(reservationId, result.getId(), "El ID debe coincidir");
+            assertEquals(guestId, result.getGuestId(), "El ID del huésped debe coincidir");
+            assertEquals(roomId, result.getRoomId(), "El ID de la habitación debe coincidir");
+            assertEquals(checkIn, result.getCheckIn(), "El checkIn debe coincidir");
+            assertEquals(checkOut, result.getCheckOut(), "El checkOut debe coincidir");
+            
             verify(reservationRepository, times(1)).findById(reservationId);
+            verify(mapper, times(1)).map(reservationEntity, Reservation.class);
         }
 
         @Test
-        @DisplayName("Should throw EntityNotExistsException when reservation does not exist")
+        @DisplayName("Falla: Debe lanzar excepción cuando la reserva no existe")
         void shouldThrowExceptionWhenReservationNotExists() {
-            // Arrange
+            // Arrange: mock retorna empty para reserva inexistente
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.empty());
 
             // Act & Assert
-            assertThrows(EntityNotExistsException.class, () -> {
-                reservationService.getById(reservationId);
-            });
+            EntityNotExistsException exception = assertThrows(
+                EntityNotExistsException.class,
+                () -> reservationService.getById(reservationId),
+                "Debe lanzar EntityNotExistsException cuando la reserva no existe"
+            );
+            assertTrue(exception.getMessage().contains(Constants.RESERVATION_NOT_FOUND));
+            verify(reservationRepository, times(1)).findById(reservationId);
         }
     }
 
+    // ==================== PRUEBAS DE ACTUALIZACIÓN DE RESERVA ====================
     @Nested
-    @DisplayName("Update Reservation Tests")
+    @DisplayName("✓ ACTUALIZAR RESERVA - Pruebas de modificación")
     class UpdateReservationTests {
 
         @Test
-        @DisplayName("Should update a reservation successfully")
+        @DisplayName("Debe actualizar una reserva exitosamente con datos válidos")
         void shouldUpdateReservationSuccessfully() {
-            // Arrange
+            // Arrange: preparar datos para la actualización
+            Reservation updatedReservation = new Reservation();
+            updatedReservation.setId(reservationId);
+            updatedReservation.setGuestId(guestId);
+            updatedReservation.setRoomId(roomId);
+            updatedReservation.setCheckIn(checkIn);
+            updatedReservation.setCheckOut(checkOut);
+            updatedReservation.setGuestsCount(2);
+            updatedReservation.setNotes("Test reservation");
+
+            // Configurar mocks
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.of(reservationEntity));
             when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
             when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
             when(reservationRepository.existsOverlappingReservationForRoom(
-                any(), any(), any(), any()))
-                .thenReturn(false);
+                any(), any(), any(), any())).thenReturn(false);
             when(reservationRepository.existsOverlappingReservationForGuest(
-                any(), any(), any(), any()))
-                .thenReturn(false);
-            doReturn(reservationEntity).when(mapper).map(any(), any());
+                any(), any(), any(), any())).thenReturn(false);
+            // Donothing para el mapper.map que modifica el objeto existente
+            doNothing().when(mapper).map(any(ReservationDto.class), any(ReservationEntity.class));
             when(reservationRepository.saveAndFlush(any(ReservationEntity.class)))
                 .thenReturn(reservationEntity);
             when(mapper.map(reservationEntity, Reservation.class))
-                .thenReturn(reservation);
+                .thenReturn(updatedReservation);
 
-            // Act
+            // Act: actualizar la reserva
             Reservation result = reservationService.update(reservationDto, reservationId);
 
             // Assert
-            assertNotNull(result);
-            assertEquals(reservationId, result.getId());
+            assertNotNull(result, "La reserva actualizada no debe ser nula");
+            assertEquals(reservationId, result.getId(), "El ID debe coincidir");
+            
             verify(reservationRepository, times(1)).findById(reservationId);
             verify(reservationRepository, times(1)).saveAndFlush(any(ReservationEntity.class));
         }
 
         @Test
-        @DisplayName("Should throw EntityNotExistsException when trying to update non-existent reservation")
+        @DisplayName("Falla: Debe rechazar cuando intenta actualizar una reserva inexistente")
         void shouldThrowExceptionWhenUpdatingNonExistentReservation() {
-            // Arrange
+            // Arrange: reserva no existe
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.empty());
 
             // Act & Assert
-            assertThrows(EntityNotExistsException.class, () -> {
-                reservationService.update(reservationDto, reservationId);
-            });
+            EntityNotExistsException exception = assertThrows(
+                EntityNotExistsException.class,
+                () -> reservationService.update(reservationDto, reservationId),
+                "Debe lanzar EntityNotExistsException al intentar actualizar una reserva inexistente"
+            );
+            assertTrue(exception.getMessage().contains(Constants.RESERVATION_NOT_FOUND));
         }
-    }
-
-    @Nested
-    @DisplayName("Delete Reservation Tests")
-    class DeleteReservationTests {
 
         @Test
-        @DisplayName("Should delete a reservation successfully")
-        void shouldDeleteReservationSuccessfully() {
-            // Arrange
+        @DisplayName("Falla: Debe rechazar cuando la actualización tiene fechas inválidas")
+        void shouldThrowExceptionWhenUpdatingWithInvalidDateRange() {
+            // Arrange: crear DTO con fechas inválidas
+            ReservationDto invalidDto = new ReservationDto();
+            invalidDto.setGuestId(guestId);
+            invalidDto.setRoomId(roomId);
+            invalidDto.setCheckIn(checkOut);
+            invalidDto.setCheckOut(checkIn); // Invertido
+            invalidDto.setGuestsCount(2);
+
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.of(reservationEntity));
 
-            // Act
-            reservationService.delete(reservationId);
-
-            // Assert
-            verify(reservationRepository, times(1)).findById(reservationId);
-            verify(reservationRepository, times(1)).deleteById(reservationId);
+            // Act & Assert
+            BusinessRuleException exception = assertThrows(
+                BusinessRuleException.class,
+                () -> reservationService.update(invalidDto, reservationId),
+                "Debe lanzar excepción cuando las fechas son inválidas"
+            );
+            assertTrue(exception.getMessage().contains(Constants.INVALID_RESERVATION_RANGE));
         }
 
         @Test
-        @DisplayName("Should throw EntityNotExistsException when trying to delete non-existent reservation")
+        @DisplayName("Falla: Debe rechazar cuando la habitación no está disponible durante la actualización")
+        void shouldThrowExceptionWhenUpdatingWithUnavailableRoom() {
+            // Arrange: habitación no disponible
+            RoomEntity unavailableRoom = new RoomEntity();
+            unavailableRoom.setAvailable(false);
+            
+            when(reservationRepository.findById(reservationId))
+                .thenReturn(Optional.of(reservationEntity));
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(unavailableRoom));
+            when(guestRepository.findById(guestId)).thenReturn(Optional.of(guestEntity));
+
+            // Act & Assert
+            BusinessRuleException exception = assertThrows(
+                BusinessRuleException.class,
+                () -> reservationService.update(reservationDto, reservationId),
+                "Debe lanzar excepción cuando la habitación no está disponible"
+            );
+            assertTrue(exception.getMessage().contains(Constants.ROOM_NOT_AVAILABLE));
+        }
+    }
+
+    // ==================== PRUEBAS DE ELIMINACIÓN DE RESERVA ====================
+    @Nested
+    @DisplayName("✓ ELIMINAR RESERVA - Pruebas de borrado")
+    class DeleteReservationTests {
+
+        @Test
+        @DisplayName("Debe eliminar una reserva exitosamente")
+        void shouldDeleteReservationSuccessfully() {
+            // Arrange: configurar mock para retornar una reserva existente
+            when(reservationRepository.findById(reservationId))
+                .thenReturn(Optional.of(reservationEntity));
+
+            // Act: eliminar la reserva
+            assertDoesNotThrow(
+                () -> reservationService.delete(reservationId),
+                "No debe lanzar excepción al eliminar una reserva existente"
+            );
+
+            // Assert: verificar que se invocaron los métodos correctos
+            verify(reservationRepository, times(1)).findById(reservationId);
+            verify(reservationRepository, times(1)).delete(reservationEntity);
+            verify(reservationRepository, times(1)).flush();
+        }
+
+        @Test
+        @DisplayName("Falla: Debe rechazar cuando intenta eliminar una reserva inexistente")
         void shouldThrowExceptionWhenDeletingNonExistentReservation() {
-            // Arrange
+            // Arrange: reserva no existe
             when(reservationRepository.findById(reservationId))
                 .thenReturn(Optional.empty());
 
             // Act & Assert
-            assertThrows(EntityNotExistsException.class, () -> {
-                reservationService.delete(reservationId);
-            });
+            EntityNotExistsException exception = assertThrows(
+                EntityNotExistsException.class,
+                () -> reservationService.delete(reservationId),
+                "Debe lanzar EntityNotExistsException al intentar eliminar una reserva inexistente"
+            );
+            assertTrue(exception.getMessage().contains(Constants.RESERVATION_NOT_FOUND));
+            
+            // Verificar que delete nunca fue invocado
+            verify(reservationRepository, never()).delete(any());
         }
     }
 
+    // ==================== PRUEBAS DE CONSULTA Y RECUPERACIÓN DE RESERVAS ====================
     @Nested
-    @DisplayName("Get All Reservations Tests")
-    class GetAllReservationsTests {
+    @DisplayName("✓ CONSULTAR RESERVAS - Pruebas de búsqueda y filtrado")
+    class QueryReservationTests {
 
         @Test
-        @DisplayName("Should retrieve all reservations successfully")
+        @DisplayName("Debe obtener todas las reservas exitosamente")
         void shouldGetAllReservationsSuccessfully() {
-            // Arrange
-            List<ReservationEntity> entities = List.of(reservationEntity);
+            // Arrange: preparar datos
+            List<ReservationEntity> entities = Arrays.asList(
+                reservationEntity,
+                new ReservationEntity()
+            );
+            List<Reservation> reservations = Arrays.asList(
+                reservation,
+                new Reservation()
+            );
 
             when(reservationRepository.findAll()).thenReturn(entities);
-            when(mapper.map(eq(entities), any()))
-                .thenReturn(List.of(reservation));
+            when(mapper.map(entities, new TypeToken<List<Reservation>>() {}.getType()))
+                .thenReturn(reservations);
 
-            // Act
+            // Act: obtener todas las reservas
             List<Reservation> result = reservationService.getAll();
 
             // Assert
-            assertNotNull(result);
-            assertEquals(1, result.size());
+            assertNotNull(result, "La lista de reservas no debe ser nula");
+            assertEquals(2, result.size(), "Debe retornar 2 reservas");
             verify(reservationRepository, times(1)).findAll();
+        }
+
+        @Test
+        @DisplayName("Debe obtener reservas por ID de habitación")
+        void shouldGetReservationsByRoomIdSuccessfully() {
+            // Arrange
+            List<ReservationEntity> entities = Arrays.asList(reservationEntity);
+            List<Reservation> reservations = Arrays.asList(reservation);
+
+            when(reservationRepository.findByRoomId(roomId)).thenReturn(entities);
+            when(mapper.map(entities, new TypeToken<List<Reservation>>() {}.getType()))
+                .thenReturn(reservations);
+
+            // Act: obtener reservas de una habitación
+            List<Reservation> result = reservationService.getByRoomId(roomId);
+
+            // Assert
+            assertNotNull(result, "La lista no debe ser nula");
+            assertEquals(1, result.size(), "Debe retornar 1 reserva");
+            verify(reservationRepository, times(1)).findByRoomId(roomId);
+        }
+
+        @Test
+        @DisplayName("Debe obtener reservas por ID de huésped")
+        void shouldGetReservationsByGuestIdSuccessfully() {
+            // Arrange
+            List<ReservationEntity> entities = Arrays.asList(reservationEntity);
+            List<Reservation> reservations = Arrays.asList(reservation);
+
+            when(reservationRepository.findByGuestId(guestId)).thenReturn(entities);
+            when(mapper.map(entities, new TypeToken<List<Reservation>>() {}.getType()))
+                .thenReturn(reservations);
+
+            // Act: obtener reservas de un huésped
+            List<Reservation> result = reservationService.getByGuestId(guestId);
+
+            // Assert
+            assertNotNull(result, "La lista no debe ser nula");
+            assertEquals(1, result.size(), "Debe retornar 1 reserva");
+            verify(reservationRepository, times(1)).findByGuestId(guestId);
+        }
+
+        @Test
+        @DisplayName("Debe retornar una lista vacía cuando no existen reservas")
+        void shouldReturnEmptyListWhenNoReservations() {
+            // Arrange
+            when(reservationRepository.findAll()).thenReturn(Arrays.asList());
+            when(mapper.map(Arrays.asList(), new TypeToken<List<Reservation>>() {}.getType()))
+                .thenReturn(Arrays.asList());
+
+            // Act: obtener todas las reservas (cuando no hay)
+            List<Reservation> result = reservationService.getAll();
+
+            // Assert
+            assertNotNull(result, "La lista no debe ser nula");
+            assertEquals(0, result.size(), "La lista debe estar vacía");
+        }
+    }
+
+    // ==================== PRUEBAS DE DISPONIBILIDAD DE HABITACIÓN ====================
+    @Nested
+    @DisplayName("✓ DISPONIBILIDAD DE HABITACIÓN - Pruebas de validación")
+    class RoomAvailabilityTests {
+
+        @Test
+        @DisplayName("Debe confirmar que una habitación está disponible para las fechas especificadas")
+        void shouldReturnTrueWhenRoomIsAvailable() {
+            // Arrange: configurar mocks para indicar disponibilidad
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+            when(reservationRepository.existsOverlappingReservationForRoom(
+                roomId, checkIn, checkOut, null)).thenReturn(false);
+
+            // Act: verificar disponibilidad
+            boolean result = reservationService.isRoomAvailable(roomId, checkIn, checkOut);
+
+            // Assert
+            assertTrue(result, "La habitación debe estar disponible");
+            verify(roomRepository, times(1)).findById(roomId);
+            verify(reservationRepository, times(1)).existsOverlappingReservationForRoom(
+                roomId, checkIn, checkOut, null);
+        }
+
+        @Test
+        @DisplayName("Debe confirmar que una habitación NO está disponible cuando hay superposición")
+        void shouldReturnFalseWhenRoomNotAvailable() {
+            // Arrange: configurar mocks para indicar NO disponibilidad
+            when(roomRepository.findById(roomId)).thenReturn(Optional.of(roomEntity));
+            when(reservationRepository.existsOverlappingReservationForRoom(
+                roomId, checkIn, checkOut, null)).thenReturn(true);
+
+            // Act: verificar disponibilidad
+            boolean result = reservationService.isRoomAvailable(roomId, checkIn, checkOut);
+
+            // Assert
+            assertFalse(result, "La habitación no debe estar disponible por superposición");
+        }
+
+        @Test
+        @DisplayName("Falla: Debe lanzar excepción si la habitación no existe")
+        void shouldThrowExceptionWhenCheckingAvailabilityOfNonExistentRoom() {
+            // Arrange: habitación no existe
+            when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            EntityNotExistsException exception = assertThrows(
+                EntityNotExistsException.class,
+                () -> reservationService.isRoomAvailable(roomId, checkIn, checkOut),
+                "Debe lanzar EntityNotExistsException si la habitación no existe"
+            );
+            assertTrue(exception.getMessage().contains(Constants.ROOM_NOT_FOUND));
+        }
+
+        @Test
+        @DisplayName("Falla: Debe lanzar excepción si el rango de fechas es inválido")
+        void shouldThrowExceptionWhenCheckingAvailabilityWithInvalidDateRange() {
+            // Act & Assert: no se debe ni verificar existencia de habitación
+            BusinessRuleException exception = assertThrows(
+                BusinessRuleException.class,
+                () -> reservationService.isRoomAvailable(roomId, checkOut, checkIn),
+                "Debe lanzar excepción cuando las fechas son inválidas"
+            );
+            assertTrue(exception.getMessage().contains(Constants.INVALID_RESERVATION_RANGE));
         }
     }
 }
