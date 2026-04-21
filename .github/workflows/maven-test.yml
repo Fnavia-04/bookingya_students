@@ -80,24 +80,42 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: fase1-tdd-reports
+          path: artifacts/fase1
 
       - name: Descargar artefactos FASE 2
         uses: actions/download-artifact@v4
         with:
           name: fase2-bdd-reports
+          path: artifacts/fase2
 
       - name: Mostrar resumen rápido de artefactos
         run: |
-          echo "=== Listado de artefactos descargados ==="
-          ls -R || true
-          echo "\n✅ Jobs completados: ${{ needs }}"
+          echo "=== Listado de artefactos descargados (artifacts/) ==="
+          if [ -d artifacts ]; then
+            ls -la artifacts || true
+            ls -R artifacts || true
+          else
+            echo "No se encontraron artefactos descargados"
+          fi
+          echo "\n✅ Jobs completados: ${GITHUB_REF}" || true
 
       - name: Publicar informe agregado (si existe)
         if: always()
         run: |
-          if [ -f target/site/surefire-report.html ]; then
-            echo "Surefire report disponible: target/site/surefire-report.html"
+          # Buscar reportes de surefire en artifacts/fase1
+          if [ -f artifacts/fase1/target/site/surefire-report.html ]; then
+            echo "Surefire report disponible: artifacts/fase1/target/site/surefire-report.html"
+          elif [ -f artifacts/fase1/surefire-report.html ]; then
+            echo "Surefire report disponible: artifacts/fase1/surefire-report.html"
+          else
+            echo "No se encontró surefire report en artifacts/fase1"
           fi
-          if ls target/site/serenity 1> /dev/null 2>&1; then
-            echo "Serenity report disponible en: target/site/serenity"
+
+          # Buscar reportes de Serenity en artifacts/fase2
+          if [ -d artifacts/fase2/target/site/serenity ]; then
+            echo "Serenity report disponible en: artifacts/fase2/target/site/serenity"
+          elif [ -d artifacts/fase2/site/serenity ]; then
+            echo "Serenity report disponible en: artifacts/fase2/site/serenity"
+          else
+            echo "No se encontró Serenity report en artifacts/fase2"
           fi
