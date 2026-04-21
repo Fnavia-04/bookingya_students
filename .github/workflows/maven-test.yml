@@ -1,4 +1,4 @@
-name: BookingYa - Pruebas Unitarias (TDD)
+name: BookingYa - Pipeline de pruebas (TDD / BDD / Summary)
 
 on:
   push:
@@ -7,40 +7,97 @@ on:
     branches: [ main, estudiantes ]
 
 jobs:
-  test:
+  fase1-tdd:
+    name: FASE 1 - TDD (JUnit 5 + Mockito)
     runs-on: ubuntu-latest
-    
     strategy:
       matrix:
         java-version: ['17']
-
     steps:
-    - name: Checkout código
-      uses: actions/checkout@v3
+      - name: Checkout código
+        uses: actions/checkout@v3
 
-    - name: Instalar JDK ${{ matrix.java-version }}
-      uses: actions/setup-java@v3
-      with:
-        java-version: ${{ matrix.java-version }}
-        distribution: 'temurin'
-        cache: maven
+      - name: Instalar JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+          cache: maven
 
-    - name: Compilar y ejecutar pruebas TDD
-      run: mvn clean test -B -V
+      - name: Compilar y ejecutar pruebas unitarias (TDD)
+        run: mvn -B -V clean test
 
-    - name: Generar reporte de pruebas
-      if: always()
-      run: mvn surefire-report:report
+      - name: Generar reporte surefire
+        if: always()
+        run: mvn surefire-report:report || true
 
-    - name: Subir resultados de pruebas
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-reports
-        path: target/site/surefire-report.html
+      - name: Subir artefactos TDD
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fase1-tdd-reports
+          path: |
+            target/site/surefire-report.html
+            target/surefire-reports/**
 
-    - name: Mostrar resumen de pruebas
-      if: always()
-      run: |
-        echo "✅ Pruebas completadas"
-        echo "📊 Reporte disponible en: target/site/surefire-report.html"
+  fase2-bdd:
+    name: FASE 2 - BDD (Serenity + Cucumber)
+    runs-on: ubuntu-latest
+    needs: fase1-tdd
+    strategy:
+      matrix:
+        java-version: ['17']
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Instalar JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Ejecutar pruebas BDD (Serenity/Cucumber)
+        run: mvn -B -V verify
+
+      - name: Subir artefactos BDD
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fase2-bdd-reports
+          path: |
+            target/site/serenity/**
+            target/cucumber-reports/**
+            target/site/*
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [fase1-tdd, fase2-bdd]
+    steps:
+      - name: Descargar artefactos FASE 1
+        uses: actions/download-artifact@v4
+        with:
+          name: fase1-tdd-reports
+
+      - name: Descargar artefactos FASE 2
+        uses: actions/download-artifact@v4
+        with:
+          name: fase2-bdd-reports
+
+      - name: Mostrar resumen rápido de artefactos
+        run: |
+          echo "=== Listado de artefactos descargados ==="
+          ls -R || true
+          echo "\n✅ Jobs completados: ${{ needs }}"
+
+      - name: Publicar informe agregado (si existe)
+        if: always()
+        run: |
+          if [ -f target/site/surefire-report.html ]; then
+            echo "Surefire report disponible: target/site/surefire-report.html"
+          fi
+          if ls target/site/serenity 1> /dev/null 2>&1; then
+            echo "Serenity report disponible en: target/site/serenity"
+          fi
