@@ -1,10 +1,7 @@
 ﻿name: FASE 3 - ATDD con Playwright
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   test-fase3:

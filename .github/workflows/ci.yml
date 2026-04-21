@@ -1,10 +1,7 @@
 name: FASE 1 & 2 - TDD + BDD Testing
 
 on:
-  push:
-    branches: [ "main", "estudiantes", "develop" ]
-  pull_request:
-    branches: [ "main", "estudiantes", "develop" ]
+  workflow_dispatch:
 
 jobs:
   fase1-tdd:
