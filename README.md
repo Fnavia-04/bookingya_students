@@ -1,3 +1,4 @@
+
 # BookingYa — Actividad 2: TDD + BDD + ATDD
 
 ## Estructura de archivos entregados
@@ -124,3 +125,6 @@ npx playwright show-report
 | 13 | Actualizar reserva válida | TDD-14,15 | ✅ | AC-11 |
 | 14 | Eliminar reserva | TDD-16,17 | ✅ | AC-12,13 |
 | 15 | Consultar disponibilidad | TDD-18,19,20 | ✅ | AC-10a,10b |
+
+
+Test
