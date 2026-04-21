@@ -1,4 +1,3 @@
-# language: es
 @reservas
 Feature: Gestión de Reservas - BookingYa
   Como usuario de BookingYa
@@ -19,7 +18,7 @@ Feature: Gestión de Reservas - BookingYa
 
   @crear
   Scenario: No se permite reservar una habitacion con mas personas de las que cabe
-    Given que existe una habitacion disponible con codigo "HABIT-002" para solo 1 persona
+    Given que existe una habitacion disponible con codigo "HABIT-002" para 1 personas
     And que existe un huesped registrado con cedula "0987654321"
     When intento reservar esa habitacion para 4 personas
     Then el sistema rechaza la reserva con error 400
