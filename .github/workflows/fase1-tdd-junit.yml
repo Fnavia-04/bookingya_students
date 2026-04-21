@@ -27,7 +27,7 @@ jobs:
 
     - name: Publicar resultados
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-results-fase1
         path: target/surefire-reports/

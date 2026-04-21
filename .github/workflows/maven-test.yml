@@ -34,7 +34,7 @@ jobs:
 
     - name: Subir resultados de pruebas
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-reports
         path: target/site/surefire-report.html

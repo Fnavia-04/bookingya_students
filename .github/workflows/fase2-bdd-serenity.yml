@@ -30,7 +30,7 @@ jobs:
 
     - name: Publicar reporte Serenity
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: serenity-report-fase2
         path: fase2/target/site/serenity/
