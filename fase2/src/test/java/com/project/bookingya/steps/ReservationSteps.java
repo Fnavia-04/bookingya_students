@@ -51,12 +51,12 @@ public class ReservationSteps {
     public void sistemaDisponible(String url) {
         this.baseUrl = url;
         SerenityRest.setDefaultBasePath(url);
-        // Validar que el servidor está disponible
+        // Validar que el servidor está disponible haciendo GET a /room
         response = SerenityRest.given()
-                .when().get("/");
+                .when().get("/room");
         assertThat("El sistema debe estar disponible", 
                 response.statusCode(), 
-                anyOf(is(200), is(404), is(500)));
+                anyOf(is(200), is(400), is(404)));
     }
 
     // ==================== GIVEN: PREPARACIÓN DE DATOS ====================
@@ -71,9 +71,8 @@ public class ReservationSteps {
         body.put("name", "Habitacion " + code);
         body.put("city", "Bogota");
         body.put("maxGuests", capacity);
-        body.put("nightlyPrice", 120.0);
+        body.put("nightlyPrice", "120.00");
         body.put("available", true);
-        body.put("description", "Test habitación para " + capacity + " personas");
 
         response = SerenityRest.given()
                 .contentType("application/json")
@@ -95,11 +94,10 @@ public class ReservationSteps {
      */
     @Dado("que existe un huesped registrado con cedula {string}")
     public void crearHuesped(String cedula) {
-        Map<String, String> body = new HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("identification", cedula);
         body.put("name", "Usuario " + cedula);
         body.put("email", "usuario" + cedula + "@mail.com");
-        body.put("phone", "3001234567");
 
         response = SerenityRest.given()
                 .contentType("application/json")
@@ -127,7 +125,6 @@ public class ReservationSteps {
         body.put("checkIn", "2027-06-15T14:00:00");
         body.put("checkOut", "2027-06-20T11:00:00");
         body.put("guestsCount", 1);
-        body.put("notes", "Reserva de prueba BDD");
 
         response = SerenityRest.given()
                 .contentType("application/json")
@@ -180,7 +177,6 @@ public class ReservationSteps {
         body.put("checkIn", checkIn + "T14:00:00");
         body.put("checkOut", checkOut + "T11:00:00");
         body.put("guestsCount", guests);
-        body.put("notes", "Reserva BDD - Test " + System.currentTimeMillis());
 
         response = SerenityRest.given()
                 .contentType("application/json")
